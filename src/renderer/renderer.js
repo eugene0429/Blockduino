@@ -21,10 +21,17 @@ const workspace = Blockly.inject('blocklyDiv', {
 window.appState = { workspace, currentFilePath: null, dirty: false };
 
 // 새 프로젝트 기본 블록: 시작하면 + 계속 반복하기
-Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [
-  { type: 'basic_setup', x: 40, y: 40 },
-  { type: 'basic_loop', x: 40, y: 220 },
-] } }, workspace);
+// Blockly 이벤트는 비동기로 플러시되므로, 프로그램적 로드 중에는 이벤트를 꺼서
+// 뒤늦게 도착하는 change 이벤트가 dirty 플래그를 되돌리지 않도록 한다.
+Blockly.Events.disable();
+try {
+  Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [
+    { type: 'basic_setup', x: 40, y: 40 },
+    { type: 'basic_loop', x: 40, y: 220 },
+  ] } }, workspace);
+} finally {
+  Blockly.Events.enable();
+}
 
 function refreshCode() {
   const code = arduinoGenerator.workspaceToCode(workspace);
@@ -78,7 +85,12 @@ async function openProject() {
       !(await ipcRenderer.invoke('confirm-discard'))) return;
   const result = await ipcRenderer.invoke('project:open');
   if (!result) return;
-  Blockly.serialization.workspaces.load(result.json, workspace);
+  Blockly.Events.disable();
+  try {
+    Blockly.serialization.workspaces.load(result.json, workspace);
+  } finally {
+    Blockly.Events.enable();
+  }
   window.appState.currentFilePath = result.filePath;
   window.appState.dirty = false;
   document.getElementById('project-name').value = path.basename(result.filePath, '.bdn');
