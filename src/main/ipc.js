@@ -8,25 +8,43 @@ const BDN_FILTER = [{ name: 'Blockduino 프로젝트', extensions: ['bdn'] }];
 
 function registerIpc(getWindow) {
   ipcMain.handle('project:save', async (_e, { json, filePath }) => {
-    let target = filePath;
-    if (!target) {
-      const r = await dialog.showSaveDialog(getWindow(), {
-        title: '프로젝트 저장', defaultPath: '새 프로젝트.bdn', filters: BDN_FILTER,
-      });
-      if (r.canceled) return null;
-      target = r.filePath;
+    try {
+      let target = filePath;
+      if (!target) {
+        const r = await dialog.showSaveDialog(getWindow(), {
+          title: '프로젝트 저장', defaultPath: '새 프로젝트.bdn', filters: BDN_FILTER,
+        });
+        if (r.canceled) return null;
+        target = r.filePath;
+      }
+      await fs.writeFile(target, JSON.stringify(json, null, 2), 'utf8');
+      return target;
+    } catch (err) {
+      return {
+        error: {
+          message: '프로젝트를 저장하지 못했어요. 다른 위치에 저장해 보세요',
+          detail: String(err),
+        },
+      };
     }
-    await fs.writeFile(target, JSON.stringify(json, null, 2), 'utf8');
-    return target;
   });
 
   ipcMain.handle('project:open', async () => {
-    const r = await dialog.showOpenDialog(getWindow(), {
-      title: '프로젝트 열기', filters: BDN_FILTER, properties: ['openFile'],
-    });
-    if (r.canceled || !r.filePaths[0]) return null;
-    const text = await fs.readFile(r.filePaths[0], 'utf8');
-    return { filePath: r.filePaths[0], json: JSON.parse(text) };
+    try {
+      const r = await dialog.showOpenDialog(getWindow(), {
+        title: '프로젝트 열기', filters: BDN_FILTER, properties: ['openFile'],
+      });
+      if (r.canceled || !r.filePaths[0]) return null;
+      const text = await fs.readFile(r.filePaths[0], 'utf8');
+      return { filePath: r.filePaths[0], json: JSON.parse(text) };
+    } catch (err) {
+      return {
+        error: {
+          message: '프로젝트 파일을 열 수 없어요. 파일이 손상되었을 수 있어요',
+          detail: String(err),
+        },
+      };
+    }
   });
 
   ipcMain.handle('confirm-discard', async () => {

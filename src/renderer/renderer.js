@@ -72,6 +72,11 @@ async function saveProject() {
   const saved = await ipcRenderer.invoke('project:save', {
     json, filePath: window.appState.currentFilePath,
   });
+  if (saved && saved.error) {
+    showError(saved.error.message, saved.error.detail, false);
+    setStatus('저장에 실패했어요');
+    return;
+  }
   if (saved) {
     window.appState.currentFilePath = saved;
     window.appState.dirty = false;
@@ -85,6 +90,11 @@ async function openProject() {
       !(await ipcRenderer.invoke('confirm-discard'))) return;
   const result = await ipcRenderer.invoke('project:open');
   if (!result) return;
+  if (result.error) {
+    showError(result.error.message, result.error.detail, false);
+    setStatus('프로젝트를 여는 데 실패했어요');
+    return;
+  }
   Blockly.Events.disable();
   try {
     Blockly.serialization.workspaces.load(result.json, workspace);
