@@ -61,7 +61,7 @@ vendor/arduino/                   # (git 제외) cli 바이너리 + data/user �
 **Interfaces:**
 - Produces: `npm start`로 열리는 창. `index.html`에 이후 태스크가 쓰는 DOM id: `#blocklyDiv`, `#code-preview`, `#wiring-panel`, `#tab-code`, `#tab-wiring`, `#btn-open`, `#btn-save`, `#port-select`, `#btn-upload`, `#status-bar`, `#project-name`
 
-- [ ] **Step 1: package.json / .gitignore 작성**
+- [x] **Step 1: package.json / .gitignore 작성**
 
 ```json
 {
@@ -88,7 +88,7 @@ vendor/arduino/                   # (git 제외) cli 바이너리 + data/user �
 
 `.gitignore`는 이미 저장소 루트에 존재한다 (`node_modules/`, `dist/`, `vendor/`, `*.log`, `.claude/settings.local.json`). 새로 만들거나 덮어쓰지 말 것.
 
-- [ ] **Step 2: 메인 프로세스**
+- [x] **Step 2: 메인 프로세스**
 
 `src/main/main.js`:
 
@@ -122,7 +122,7 @@ app.on('window-all-closed', () => {
 module.exports = { createWindow };
 ```
 
-- [ ] **Step 3: 3단 레이아웃 HTML/CSS**
+- [x] **Step 3: 3단 레이아웃 HTML/CSS**
 
 `src/renderer/index.html`:
 
@@ -184,12 +184,12 @@ main { flex: 1; display: flex; min-height: 0; }
 
 `src/renderer/renderer.js`는 이 태스크에서는 빈 파일로 생성한다 (Task 8에서 구현).
 
-- [ ] **Step 4: 실행 확인**
+- [x] **Step 4: 실행 확인**
 
 Run: `npm install && npm start`
 Expected: "Blockduino" 창이 뜨고 툴바/좌측 빈 영역/우측 "코드·배선" 탭/하단 상태바가 보인다. 창을 닫아 종료.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json .gitignore src
