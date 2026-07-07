@@ -1,2 +1,2 @@
 'use strict';
-import './basic.js';
+require('./basic.js');

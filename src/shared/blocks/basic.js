@@ -1,6 +1,6 @@
 'use strict';
-import Blockly from 'blockly/core';
-import { arduinoGenerator as g, Order } from '../arduino-generator.js';
+const Blockly = require('blockly/core');
+const { arduinoGenerator: g, Order } = require('../arduino-generator.js');
 
 Blockly.defineBlocksWithJsonArray([
   {

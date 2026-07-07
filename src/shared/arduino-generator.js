@@ -1,5 +1,5 @@
 'use strict';
-import Blockly from 'blockly/core';
+const Blockly = require('blockly/core');
 
 const Order = {
   ATOMIC: 0,
@@ -82,4 +82,4 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
 }
 
 const arduinoGenerator = new ArduinoGenerator();
-export { arduinoGenerator, ArduinoGenerator, Order };
+module.exports = { arduinoGenerator, ArduinoGenerator, Order };
