@@ -1,6 +1,8 @@
 'use strict';
 const { ipcMain, dialog } = require('electron');
 const fs = require('fs/promises');
+const arduino = require('./arduino.js');
+const { friendlyError } = require('./messages.js');
 
 const BDN_FILTER = [{ name: 'Blockduino 프로젝트', extensions: ['bdn'] }];
 
@@ -33,6 +35,21 @@ function registerIpc(getWindow) {
       message: '저장하지 않은 변경이 있어요. 저장하지 않고 계속할까요?',
     });
     return r.response === 0;
+  });
+
+  ipcMain.handle('ports:list', () => arduino.listPorts());
+
+  ipcMain.handle('sketch:upload', async (_e, { code, port }) => {
+    if (!port) {
+      const fe = friendlyError('no-port', '');
+      return { ok: false, ...fe };
+    }
+    const result = await arduino.compileAndUpload(code, port, (stage) => {
+      getWindow().webContents.send('upload:stage', stage);
+    });
+    if (result.ok) return { ok: true };
+    const fe = friendlyError(result.stage, result.output);
+    return { ok: false, ...fe };
   });
 }
 

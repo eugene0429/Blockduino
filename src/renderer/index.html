@@ -26,6 +26,15 @@
     </aside>
   </main>
   <footer id="status-bar">준비됨</footer>
+  <dialog id="error-dialog">
+    <h3 id="error-message"></h3>
+    <p id="ch340-hint" hidden>
+      포트가 보이지 않으면 CH340 드라이버가 필요할 수 있어요.<br />
+      선생님과 함께 "CH340 드라이버"를 검색해 설치한 뒤 다시 연결해 보세요.
+    </p>
+    <details><summary>자세히 보기</summary><pre id="error-detail"></pre></details>
+    <button id="error-close">닫기</button>
+  </dialog>
   <script src="renderer.js"></script>
 </body>
 </html>

@@ -86,3 +86,64 @@ function setStatus(msg) {
 document.getElementById('btn-save').addEventListener('click', saveProject);
 document.getElementById('btn-open').addEventListener('click', openProject);
 window.blockduino.setStatus = setStatus;
+
+// ── 포트 감지 & 업로드 ──────────────────────────────
+const portSelect = document.getElementById('port-select');
+let knownPorts = [];
+
+async function refreshPorts() {
+  const ports = await ipcRenderer.invoke('ports:list');
+  if (JSON.stringify(ports) === JSON.stringify(knownPorts)) return;
+  knownPorts = ports;
+  const prev = portSelect.value;
+  portSelect.innerHTML = '';
+  if (ports.length === 0) {
+    portSelect.add(new Option('보드를 연결하세요', ''));
+  } else {
+    for (const p of ports) portSelect.add(new Option(p.label, p.port));
+    const uno = ports.find((p) => p.isUno);
+    portSelect.value = ports.some((p) => p.port === prev) ? prev
+      : (uno ? uno.port : ports[0].port);
+  }
+}
+refreshPorts();
+setInterval(refreshPorts, 3000);
+
+function setStatusClass(cls) {
+  document.getElementById('status-bar').className = cls;
+}
+
+function showError(message, detail, showCh340Hint) {
+  document.getElementById('error-message').textContent = message;
+  document.getElementById('error-detail').textContent = detail || '(추가 정보 없음)';
+  document.getElementById('ch340-hint').hidden = !showCh340Hint;
+  document.getElementById('error-dialog').showModal();
+}
+document.getElementById('error-close').addEventListener('click', () =>
+  document.getElementById('error-dialog').close());
+
+ipcRenderer.on('upload:stage', (_e, stage) => {
+  setStatus(stage === 'compile' ? '컴파일 중...' : '보드에 업로드 중...');
+});
+
+const btnUpload = document.getElementById('btn-upload');
+btnUpload.addEventListener('click', async () => {
+  const code = arduinoGenerator.workspaceToCode(workspace);
+  btnUpload.disabled = true;
+  setStatusClass('busy');
+  setStatus('컴파일 중...');
+  const r = await ipcRenderer.invoke('sketch:upload', {
+    code, port: portSelect.value,
+  });
+  btnUpload.disabled = false;
+  if (r.ok) {
+    setStatusClass('ok');
+    setStatus('업로드 완료! ✓');
+  } else {
+    setStatusClass('error');
+    setStatus('업로드 실패');
+    // 윈도우에서 포트가 하나도 안 잡히면 CH340 드라이버 안내 표시
+    const noPorts = knownPorts.length === 0 && process.platform === 'win32';
+    showError(r.message, r.detail, noPorts);
+  }
+});
