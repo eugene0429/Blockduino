@@ -44,4 +44,14 @@ describe('ArduinoGenerator 코어', () => {
     expect(code).toContain('float var1 = 0;');   // '속도' → var1
     expect(code).toContain('float count = 0;');  // ASCII 이름은 유지
   });
+
+  it('sanitize 후 이름이 충돌하면 유니크하게 번호를 붙인다', () => {
+    const ws = new Blockly.Workspace();
+    ws.createVariable('led값');
+    ws.createVariable('led');
+    const code = g.workspaceToCode(ws);
+    ws.dispose();
+    expect(code).toContain('float led = 0;');
+    expect(code).toContain('float led2 = 0;');
+  });
 });

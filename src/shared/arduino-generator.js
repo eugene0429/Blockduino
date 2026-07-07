@@ -33,13 +33,26 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
     this.setupBody_ = '';
     this.loopBody_ = '';
     this.varNames_ = new Map();
+    const usedNames = new Set();
     let seq = 0;
     for (const v of workspace.getAllVariables()) {
       let name = v.name.replace(/[^A-Za-z0-9_]/g, '');
       if (!name || /^[0-9]/.test(name) || this.RESERVED_WORDS_.split(',').includes(name)) {
-        seq += 1;
-        name = `var${seq}`;
+        do {
+          seq += 1;
+          name = `var${seq}`;
+        } while (usedNames.has(name));
+      } else if (usedNames.has(name)) {
+        // sanitize 후 이름이 충돌하면(예: 'led값'과 'led' 모두 'led') 번호를 붙여 유니크화
+        let suffix = 2;
+        let candidate = `${name}${suffix}`;
+        while (usedNames.has(candidate)) {
+          suffix += 1;
+          candidate = `${name}${suffix}`;
+        }
+        name = candidate;
       }
+      usedNames.add(name);
       this.varNames_.set(v.getId(), name);
       this.addDeclaration(`var_${name}`, `float ${name} = 0;`);
     }
