@@ -212,7 +212,7 @@ git commit -m "feat: Electron 앱 뼈대와 3단 레이아웃"
   - `varName(variableModel)` — 한글 변수명을 C 식별자로 변환
   - `pins.js` → `{ DIGITAL_PINS, PWM_PINS, ANALOG_PINS }` (Blockly 드롭다운 `[label, value]` 배열)
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/generator-core.test.js`:
 
@@ -266,12 +266,12 @@ describe('ArduinoGenerator 코어', () => {
 });
 ```
 
-- [ ] **Step 2: 테스트 실패 확인**
+- [x] **Step 2: 테스트 실패 확인**
 
 Run: `npx vitest run tests/generator-core.test.js`
 Expected: FAIL — `Cannot find module '../src/shared/arduino-generator.js'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/shared/pins.js`:
 
@@ -373,12 +373,12 @@ const arduinoGenerator = new ArduinoGenerator();
 module.exports = { arduinoGenerator, ArduinoGenerator, Order };
 ```
 
-- [ ] **Step 4: 테스트 통과 확인**
+- [x] **Step 4: 테스트 통과 확인**
 
 Run: `npx vitest run tests/generator-core.test.js`
 Expected: PASS (3 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared tests/generator-core.test.js
