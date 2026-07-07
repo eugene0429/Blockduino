@@ -13,6 +13,9 @@ const workspace = Blockly.inject('blocklyDiv', {
   grid: { spacing: 24, length: 2, colour: '#eee', snap: true },
   zoom: { controls: true, wheel: true, startScale: 0.9 },
   trashcan: true,
+  // 오프라인 환경: 기본값(https://blockly-demo.appspot.com/...) 대신 로컬 미디어 사용
+  media: '../../node_modules/blockly/media/',
+  sounds: false,
 });
 
 window.appState = { workspace, currentFilePath: null, dirty: false };
