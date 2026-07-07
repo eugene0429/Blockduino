@@ -1,6 +1,7 @@
 'use strict';
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+const { registerIpc } = require('./ipc.js');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -13,10 +14,12 @@ function createWindow() {
   return win;
 }
 
+let mainWindow = null;
 app.whenReady().then(() => {
-  createWindow();
+  mainWindow = createWindow();
+  registerIpc(() => mainWindow);
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
 });
 

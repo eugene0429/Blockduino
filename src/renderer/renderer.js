@@ -49,3 +49,40 @@ tabCode.addEventListener('click', () => selectTab(true));
 tabWiring.addEventListener('click', () => selectTab(false));
 
 window.blockduino = { refreshCode, selectTab };
+
+const { ipcRenderer } = require('electron');
+const path = require('path');
+
+async function saveProject() {
+  const json = Blockly.serialization.workspaces.save(workspace);
+  const saved = await ipcRenderer.invoke('project:save', {
+    json, filePath: window.appState.currentFilePath,
+  });
+  if (saved) {
+    window.appState.currentFilePath = saved;
+    window.appState.dirty = false;
+    document.getElementById('project-name').value = path.basename(saved, '.bdn');
+    setStatus('저장 완료 ✓');
+  }
+}
+
+async function openProject() {
+  if (window.appState.dirty &&
+      !(await ipcRenderer.invoke('confirm-discard'))) return;
+  const result = await ipcRenderer.invoke('project:open');
+  if (!result) return;
+  Blockly.serialization.workspaces.load(result.json, workspace);
+  window.appState.currentFilePath = result.filePath;
+  window.appState.dirty = false;
+  document.getElementById('project-name').value = path.basename(result.filePath, '.bdn');
+  refreshCode();
+  setStatus('프로젝트를 열었어요');
+}
+
+function setStatus(msg) {
+  document.getElementById('status-bar').textContent = msg;
+}
+
+document.getElementById('btn-save').addEventListener('click', saveProject);
+document.getElementById('btn-open').addEventListener('click', openProject);
+window.blockduino.setStatus = setStatus;
