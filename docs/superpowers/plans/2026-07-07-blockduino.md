@@ -1857,7 +1857,7 @@ git commit -m "feat: 포트 자동 감지, 원클릭 업로드, 한글 오류 �
 - Consumes: `window.appState.workspace`, `blockduino:code-updated` 이벤트 (Task 8)
 - Produces: `renderWiringPanel(workspace, panelEl)` — 워크스페이스에서 사용 중인 부품 블록을 찾아 부품당 1장의 연결 카드(SVG) 표시
 
-- [ ] **Step 1: 배선 데이터와 렌더러 구현**
+- [x] **Step 1: 배선 데이터와 렌더러 구현**
 
 `src/renderer/wiring.js`:
 
@@ -1986,7 +1986,7 @@ function renderWiringPanel(workspace, panelEl) {
 module.exports = { renderWiringPanel, WIRING };
 ```
 
-- [ ] **Step 2: renderer.js에 연결**
+- [x] **Step 2: renderer.js에 연결**
 
 `src/renderer/renderer.js`에 추가:
 
@@ -1996,7 +1996,7 @@ document.addEventListener('blockduino:code-updated', () =>
   renderWiringPanel(workspace, document.getElementById('wiring-panel')));
 ```
 
-- [ ] **Step 3: 수동 확인**
+- [x] **Step 3: 수동 확인**
 
 Run: `npm start`
 Expected:
@@ -2005,7 +2005,7 @@ Expected:
 3. 블록의 핀을 9 → 10으로 바꾸면 카드 라벨이 D10으로 즉시 갱신
 4. 같은 핀의 같은 부품 블록을 여러 개 써도 카드는 1장
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/renderer/wiring.js src/renderer/renderer.js
