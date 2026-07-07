@@ -747,7 +747,7 @@ git commit -m "feat: 논리/반복/변수/텍스트 블록의 C++ 생성기"
 - Consumes: `arduinoGenerator`, `Order`, `pins.js`
 - Produces: 블록 타입 `io_led`, `io_digital_write`, `io_digital_read`, `io_analog_write`, `io_analog_read`, `io_button`, `io_buzzer_tone`, `io_buzzer_off`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/blocks-io.test.js`:
 
@@ -800,12 +800,12 @@ describe('입출력 블록', () => {
 });
 ```
 
-- [ ] **Step 2: 테스트 실패 확인**
+- [x] **Step 2: 테스트 실패 확인**
 
 Run: `npx vitest run tests/blocks-io.test.js`
 Expected: FAIL — `io_led` 블록 타입 미정의
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/shared/blocks/io.js`:
 
@@ -914,12 +914,12 @@ g.forBlock['io_buzzer_off'] = function (block) {
 
 `src/shared/blocks/index.js`에 `require('./io.js');` 추가.
 
-- [ ] **Step 4: 테스트 통과 확인**
+- [x] **Step 4: 테스트 통과 확인**
 
 Run: `npx vitest run`
 Expected: PASS (전체)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/blocks tests/blocks-io.test.js
