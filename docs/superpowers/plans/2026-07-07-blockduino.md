@@ -1084,7 +1084,7 @@ git commit -m "feat: 센서 블록 (초음파/DHT11/조도 CDS)"
 - Consumes: `arduinoGenerator`, `Order`, `pins.js`
 - Produces: 블록 타입 `motor_servo`(필드 `PIN`, 값 입력 `ANGLE`), `lcd_print`(필드 `ROW`, 값 입력 `TEXT`), `lcd_clear`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/blocks-motor-lcd.test.js`:
 
@@ -1135,12 +1135,12 @@ describe('서보/LCD 블록', () => {
 });
 ```
 
-- [ ] **Step 2: 테스트 실패 확인**
+- [x] **Step 2: 테스트 실패 확인**
 
 Run: `npx vitest run tests/blocks-motor-lcd.test.js`
 Expected: FAIL — `motor_servo` 블록 타입 미정의
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/shared/blocks/motor-lcd.js`:
 
@@ -1211,12 +1211,12 @@ require('./sensors.js');
 require('./motor-lcd.js');
 ```
 
-- [ ] **Step 4: 테스트 통과 확인**
+- [x] **Step 4: 테스트 통과 확인**
 
 Run: `npx vitest run`
 Expected: PASS (전체)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/blocks tests/blocks-motor-lcd.test.js
