@@ -2024,7 +2024,7 @@ git commit -m "feat: 부품별 배선 안내 카드 (핀 라벨 자동 반영)"
 - Consumes: `arduino.js`의 `baseDir()` 규약 — 개발 모드 `vendor/arduino/<platform>/`, 패키징 후 `<resources>/arduino/` 아래에 `arduino-cli(.exe)`, `data/`, `user/`
 - Produces: `npm run prepare-arduino`(빌드 머신에서 1회, 인터넷 필요), `npm run dist` → `dist/Blockduino Setup 0.1.0.exe`
 
-- [ ] **Step 1: 준비 스크립트 작성**
+- [x] **Step 1: 준비 스크립트 작성**
 
 `scripts/prepare-arduino.mjs` (현재 OS용 cli를 받아 코어/라이브러리까지 설치):
 
@@ -2077,7 +2077,7 @@ cli(['lib', 'install', 'LiquidCrystal I2C']);
 console.log('완료:', destDir);
 ```
 
-- [ ] **Step 2: electron-builder 설정**
+- [x] **Step 2: electron-builder 설정**
 
 `package.json`에 `"build"` 필드 추가:
 
@@ -2113,7 +2113,7 @@ Expected: `dist/Blockduino Setup 0.1.0.exe` 생성. 설치 후:
 2. Uno 연결 → 포트 자동 감지 → 업로드 성공
 3. 오프라인 상태에서도 컴파일/업로드 동작 (동봉 코어/라이브러리 사용 확인)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/prepare-arduino.mjs package.json
