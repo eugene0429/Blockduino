@@ -2122,6 +2122,29 @@ git commit -m "chore: arduino-cli 동봉 스크립트와 윈도우 NSIS 패키�
 
 ---
 
+### Task 14: 예제 데모 3종 (센서등 / 자동문 / 화재 경보기) — 완료
+
+스펙 6절. 미리 연결된 블록 워크스페이스를 내장 JSON으로 제공하고, 예제를 열면
+배선 탭으로 자동 전환해 연결 그림을 바로 보여준다.
+
+**Files:**
+- Create: `src/shared/examples.js` (EXAMPLES: light/door/fire, 각각 워크스페이스 JSON)
+- Modify: `src/renderer/index.html` (툴바 `#example-select`), `src/renderer/renderer.js` (로드 핸들러)
+- Test: `tests/examples.test.js` (예제별 생성 코드 검증 4건)
+
+**Interfaces:**
+- Produces: `EXAMPLES: { id, title, description, workspace }[]`
+
+- [x] **Step 1: 실패하는 테스트 작성** (`tests/examples.test.js`)
+- [x] **Step 2: 실패 확인** — `Cannot find module examples.js`
+- [x] **Step 3: 예제 데이터 구현** — 센서등(A0 조도<300 → D13 LED), 자동문(D7/D6 초음파<10cm → D9 서보 90도+1초, 아니면 0도), 화재 경보기(D4 DHT 온도>40 → D8 부저 523Hz)
+- [x] **Step 4: 전체 테스트 통과** — 29 passed
+- [x] **Step 5: 툴바 UI 연결** — 예제 선택 시 confirm-discard → 로드(Events.disable 패턴) → 배선 탭 전환
+- [x] **Step 6: 검증** — Electron 헤드리스 실행으로 드롭다운 3종/블록 12개 로드/배선 카드(서보·초음파) 확인
+- [x] **Step 7: Commit**
+
+---
+
 ## 스펙 대비 커버리지
 
 | 스펙 절 | 태스크 |
@@ -2130,9 +2153,10 @@ git commit -m "chore: arduino-cli 동봉 스크립트와 윈도우 NSIS 패키�
 | 3 블록 구성 | Task 3–7 (조도 센서 포함: Task 6) |
 | 4 기술 구조 (생성기/cli/포트/CH340/IPC) | Task 2, 10, 11, 13 |
 | 5 배선 안내 그림 | Task 12 |
-| 6 프로젝트 저장 (.bdn) | Task 9 |
-| 7 오류 처리 (한글 메시지) | Task 10, 11 |
-| 8 테스트 | 각 태스크의 vitest + Task 11/13 실기기 체크리스트 |
+| 6 예제 데모 | Task 14 |
+| 7 프로젝트 저장 (.bdn) | Task 9 |
+| 8 오류 처리 (한글 메시지) | Task 10, 11 |
+| 9 테스트 | 각 태스크의 vitest + Task 11/13 실기기 체크리스트 |
 
 
 

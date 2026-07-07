@@ -176,3 +176,29 @@ btnUpload.addEventListener('click', async () => {
     showError(r.message, r.detail, noPorts);
   }
 });
+
+// ── 예제 데모 ──────────────────────────────────────
+const { EXAMPLES } = require('../shared/examples.js');
+const exampleSelect = document.getElementById('example-select');
+for (const ex of EXAMPLES) {
+  exampleSelect.add(new Option(`${ex.title} — ${ex.description}`, ex.id));
+}
+exampleSelect.addEventListener('change', async () => {
+  const ex = EXAMPLES.find((e) => e.id === exampleSelect.value);
+  exampleSelect.value = '';
+  if (!ex) return;
+  if (window.appState.dirty &&
+      !(await ipcRenderer.invoke('confirm-discard'))) return;
+  Blockly.Events.disable();
+  try {
+    Blockly.serialization.workspaces.load(ex.workspace, workspace);
+  } finally {
+    Blockly.Events.enable();
+  }
+  window.appState.currentFilePath = null;
+  document.getElementById('project-name').value = ex.title;
+  refreshCode();
+  window.appState.dirty = false;
+  selectTab(false); // 배선 탭으로 전환해 연결 그림을 바로 보여줌
+  setStatus(`예제 '${ex.title}'을(를) 열었어요. 배선 탭에서 연결 방법을 확인하세요`);
+});
