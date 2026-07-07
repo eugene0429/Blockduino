@@ -86,14 +86,7 @@ vendor/arduino/                   # (git 제외) cli 바이너리 + data/user �
 }
 ```
 
-`.gitignore`:
-
-```
-node_modules/
-dist/
-vendor/
-*.log
-```
+`.gitignore`는 이미 저장소 루트에 존재한다 (`node_modules/`, `dist/`, `vendor/`, `*.log`, `.claude/settings.local.json`). 새로 만들거나 덮어쓰지 말 것.
 
 - [ ] **Step 2: 메인 프로세스**
 
