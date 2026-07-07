@@ -1705,7 +1705,7 @@ git commit -m "feat: arduino-cli 래퍼 (포트 파싱, 컴파일/업로드, 한
 - Consumes: `arduino.js`, `messages.js` (Task 10), `setStatus` (Task 9)
 - Produces: IPC — `invoke('ports:list')` → `{port, label, isUno}[]`, `invoke('sketch:upload', {code, port})` → `{ok, message?, detail?}`; 진행 이벤트 `webContents.send('upload:stage', 'compile'|'upload')`
 
-- [ ] **Step 1: 메인 프로세스 채널 추가**
+- [x] **Step 1: 메인 프로세스 채널 추가**
 
 `src/main/ipc.js` 상단에 require 추가 후 `registerIpc` 안에 핸들러 추가:
 
@@ -1730,7 +1730,7 @@ const { friendlyError } = require('./messages.js');
   });
 ```
 
-- [ ] **Step 2: 오류 상세 보기 UI 추가**
+- [x] **Step 2: 오류 상세 보기 UI 추가**
 
 `src/renderer/index.html`의 `<footer id="status-bar">준비됨</footer>`를 다음으로 교체:
 
@@ -1758,7 +1758,7 @@ const { friendlyError } = require('./messages.js');
 #status-bar.ok { background: #1b5e20; }
 ```
 
-- [ ] **Step 3: 렌더러 로직**
+- [x] **Step 3: 렌더러 로직**
 
 `src/renderer/renderer.js` 하단에 추가:
 
@@ -1836,7 +1836,7 @@ Expected:
 3. 보드의 13번 LED가 깜빡임
 4. 보드를 뽑고 업로드 → 오류 대화상자에 "아두이노가 연결되어 있는지 확인해 주세요" + (윈도우) CH340 안내
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/ipc.js src/renderer
