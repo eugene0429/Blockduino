@@ -4,6 +4,7 @@ const ko = require('blockly/msg/ko');
 require('../shared/blocks/index.js');
 const { arduinoGenerator } = require('../shared/arduino-generator.js');
 const toolbox = require('./toolbox.js');
+const { renderWiringPanel } = require('./wiring.js');
 
 Blockly.setLocale(ko);
 
@@ -47,6 +48,8 @@ function selectTab(showCode) {
 }
 tabCode.addEventListener('click', () => selectTab(true));
 tabWiring.addEventListener('click', () => selectTab(false));
+document.addEventListener('blockduino:code-updated', () =>
+  renderWiringPanel(workspace, document.getElementById('wiring-panel')));
 
 window.blockduino = { refreshCode, selectTab };
 
