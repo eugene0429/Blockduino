@@ -43,12 +43,15 @@ describe('논리/반복/변수 생성기', () => {
   it('변수 설정/읽기 → float 전역 + 대입', () => {
     const ws = new Blockly.Workspace();
     const v = ws.createVariable('점수');
-    Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [
-      { type: 'basic_loop', inputs: { BODY: { block: {
-        type: 'variables_set', fields: { VAR: { id: v.getId() } },
-        inputs: { VALUE: { block: num(10) } },
-      } } } },
-    ] } }, ws);
+    Blockly.serialization.workspaces.load({
+      blocks: { languageVersion: 0, blocks: [
+        { type: 'basic_loop', inputs: { BODY: { block: {
+          type: 'variables_set', fields: { VAR: { id: v.getId() } },
+          inputs: { VALUE: { block: num(10) } },
+        } } } },
+      ] },
+      variables: [{ name: '점수', id: v.getId() }],
+    }, ws);
     const code = g.workspaceToCode(ws);
     ws.dispose();
     expect(code).toContain('float var1 = 0;');

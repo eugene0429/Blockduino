@@ -1,42 +1,5 @@
 'use strict';
-const Blockly = require('blockly/core');
 const { arduinoGenerator: g, Order } = require('../arduino-generator.js');
-
-// Monkey-patch Blockly's broken block initializers to work around validation errors
-if (Blockly.Blocks.controls_repeat_ext) {
-  const origInit = Blockly.Blocks.controls_repeat_ext.init;
-  Blockly.Blocks.controls_repeat_ext.init = function() {
-    this.jsonInit({
-      type: 'controls_repeat_ext',
-      message0: 'repeat %1 times %2 do %3',
-      args0: [
-        { type: 'input_value', name: 'TIMES', check: 'Number' },
-        { type: 'input_dummy' },
-        { type: 'input_statement', name: 'DO' },
-      ],
-      previousStatement: null,
-      nextStatement: null,
-      colour: 120,
-    });
-  };
-}
-
-if (Blockly.Blocks.variables_set) {
-  const origInit = Blockly.Blocks.variables_set.init;
-  Blockly.Blocks.variables_set.init = function() {
-    this.jsonInit({
-      type: 'variables_set',
-      message0: 'set %1 to %2',
-      args0: [
-        { type: 'field_variable', name: 'VAR' },
-        { type: 'input_value', name: 'VALUE', check: 'Number' },
-      ],
-      previousStatement: null,
-      nextStatement: null,
-      colour: 240,
-    });
-  };
-}
 
 g.forBlock['math_number'] = function (block) {
   return [String(block.getFieldValue('NUM')), Order.ATOMIC];
@@ -119,18 +82,15 @@ g.forBlock['math_arithmetic'] = function (block, gen) {
 };
 
 g.forBlock['variables_get'] = function (block, gen) {
-  const varId = block.getFieldValue('VAR');
-  return [gen.varName(varId), Order.ATOMIC];
+  return [gen.varName(block.getFieldValue('VAR')), Order.ATOMIC];
 };
 
 g.forBlock['variables_set'] = function (block, gen) {
-  const varId = block.getFieldValue('VAR');
   const value = gen.valueToCode(block, 'VALUE', Order.NONE) || '0';
-  return `${gen.varName(varId)} = ${value};\n`;
+  return `${gen.varName(block.getFieldValue('VAR'))} = ${value};\n`;
 };
 
 g.forBlock['math_change'] = function (block, gen) {
-  const varId = block.getFieldValue('VAR');
   const delta = gen.valueToCode(block, 'DELTA', Order.NONE) || '0';
-  return `${gen.varName(varId)} += ${delta};\n`;
+  return `${gen.varName(block.getFieldValue('VAR'))} += ${delta};\n`;
 };
