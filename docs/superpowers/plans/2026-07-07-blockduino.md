@@ -1383,7 +1383,7 @@ git commit -m "feat: Blockly 편집기 주입, 한글 toolbox, 실시간 코드 
 - Consumes: `window.appState` (Task 8)
 - Produces: IPC 채널 — `invoke('project:save', {json, filePath})` → `저장된 filePath | null(취소)`, `invoke('project:open')` → `{filePath, json} | null(취소)`, `invoke('confirm-discard')` → `boolean`. Task 11이 같은 파일(`ipc.js`)에 채널을 추가한다.
 
-- [ ] **Step 1: 메인 프로세스 IPC 핸들러**
+- [x] **Step 1: 메인 프로세스 IPC 핸들러**
 
 `src/main/ipc.js`:
 
@@ -1444,7 +1444,7 @@ app.whenReady().then(() => {
 });
 ```
 
-- [ ] **Step 2: 렌더러 버튼 연결**
+- [x] **Step 2: 렌더러 버튼 연결**
 
 `src/renderer/renderer.js` 하단에 추가:
 
@@ -1487,7 +1487,7 @@ document.getElementById('btn-open').addEventListener('click', openProject);
 window.blockduino.setStatus = setStatus;
 ```
 
-- [ ] **Step 3: 수동 확인**
+- [x] **Step 3: 수동 확인**
 
 Run: `npm start`
 Expected:
@@ -1495,7 +1495,7 @@ Expected:
 2. 블록을 지우고 [열기] → "저장하지 않은 변경이 있어요…" 확인 대화상자 → 계속하기 → `테스트.bdn` 선택 → 블록 복원
 3. 저장된 `.bdn` 파일을 텍스트 에디터로 열면 Blockly JSON
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main src/renderer/renderer.js
