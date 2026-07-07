@@ -1517,7 +1517,7 @@ git commit -m "feat: .bdn 프로젝트 저장/열기와 미저장 변경 확인"
   - `messages.js` → `{ friendlyError(stage, output): { message, detail } }` — stage는 `'no-port' | 'compile' | 'upload'`
   - 순수 함수 `parseBoardList`, `friendlyError`는 단위 테스트 대상
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/arduino-parse.test.js`:
 
@@ -1568,12 +1568,12 @@ describe('friendlyError', () => {
 });
 ```
 
-- [ ] **Step 2: 테스트 실패 확인**
+- [x] **Step 2: 테스트 실패 확인**
 
 Run: `npx vitest run tests/arduino-parse.test.js`
 Expected: FAIL — 모듈 없음
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/main/messages.js`:
 
@@ -1682,12 +1682,12 @@ async function compileAndUpload(code, port, onStage) {
 module.exports = { parseBoardList, listPorts, compileAndUpload, FQBN };
 ```
 
-- [ ] **Step 4: 테스트 통과 확인**
+- [x] **Step 4: 테스트 통과 확인**
 
 Run: `npx vitest run`
 Expected: PASS (전체)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/arduino.js src/main/messages.js tests/arduino-parse.test.js
