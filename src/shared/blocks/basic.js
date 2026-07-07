@@ -42,8 +42,3 @@ g.forBlock['basic_delay'] = function (block, gen) {
   const sec = gen.valueToCode(block, 'SECONDS', Order.NONE) || '0';
   return `delay((${sec}) * 1000);\n`;
 };
-
-// math_number 최소 구현 (Task 4에서 나머지 내장 블록과 함께 확장)
-g.forBlock['math_number'] = function (block) {
-  return [String(block.getFieldValue('NUM')), Order.ATOMIC];
-};
