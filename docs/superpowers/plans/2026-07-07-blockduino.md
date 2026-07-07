@@ -398,7 +398,7 @@ git commit -m "feat: Arduino 코드 생성기 코어 (include/선언/setup 수�
 - Produces: 블록 타입 `basic_setup`(statement input `BODY`), `basic_loop`(statement input `BODY`), `basic_delay`(value input `SECONDS`). `require('src/shared/blocks/index.js')` 한 줄로 전 카테고리 로드(이후 태스크가 이 index에 require를 추가).
 - 테스트 헬퍼 패턴 `codeFrom(json)`은 이후 모든 블록 테스트가 동일하게 복사해 사용.
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/blocks-basic.test.js`:
 
@@ -437,12 +437,12 @@ describe('기본 블록', () => {
 
 (주: 숫자 셰도 블록이 쓰는 `math_number` 생성기는 Step 3에서 최소 구현하고, Task 4에서 `logic.js`로 옮긴다.)
 
-- [ ] **Step 2: 테스트 실패 확인**
+- [x] **Step 2: 테스트 실패 확인**
 
 Run: `npx vitest run tests/blocks-basic.test.js`
 Expected: FAIL — `Cannot find module '../src/shared/blocks/index.js'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/shared/blocks/basic.js`:
 
@@ -505,12 +505,12 @@ g.forBlock['math_number'] = function (block) {
 require('./basic.js');
 ```
 
-- [ ] **Step 4: 테스트 통과 확인**
+- [x] **Step 4: 테스트 통과 확인**
 
 Run: `npx vitest run tests/blocks-basic.test.js`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/blocks tests/blocks-basic.test.js
