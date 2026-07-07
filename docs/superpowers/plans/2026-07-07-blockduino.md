@@ -939,7 +939,7 @@ git commit -m "feat: 입출력 블록 (LED/디지털/아날로그/버튼/부저)
 - Consumes: `arduinoGenerator`, `Order`, `pins.js`
 - Produces: 값 블록 `sensor_ultrasonic`(필드 `TRIG`, `ECHO`), `sensor_dht`(필드 `PIN`, `MODE`=TEMP|HUM), `sensor_cds`(필드 `PIN`=A0–A5)
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/blocks-sensors.test.js`:
 
@@ -985,12 +985,12 @@ describe('센서 블록', () => {
 });
 ```
 
-- [ ] **Step 2: 테스트 실패 확인**
+- [x] **Step 2: 테스트 실패 확인**
 
 Run: `npx vitest run tests/blocks-sensors.test.js`
 Expected: FAIL — `sensor_ultrasonic` 블록 타입 미정의
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/shared/blocks/sensors.js`:
 
@@ -1059,12 +1059,12 @@ g.forBlock['sensor_cds'] = function (block) {
 
 `src/shared/blocks/index.js`에 `require('./sensors.js');` 추가.
 
-- [ ] **Step 4: 테스트 통과 확인**
+- [x] **Step 4: 테스트 통과 확인**
 
 Run: `npx vitest run`
 Expected: PASS (전체)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/blocks tests/blocks-sensors.test.js
