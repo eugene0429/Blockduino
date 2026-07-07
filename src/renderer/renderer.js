@@ -50,6 +50,7 @@ tabCode.addEventListener('click', () => selectTab(true));
 tabWiring.addEventListener('click', () => selectTab(false));
 document.addEventListener('blockduino:code-updated', () =>
   renderWiringPanel(workspace, document.getElementById('wiring-panel')));
+renderWiringPanel(workspace, document.getElementById('wiring-panel'));
 
 window.blockduino = { refreshCode, selectTab };
 
