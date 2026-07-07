@@ -16,5 +16,19 @@
   },
   "dependencies": {
     "blockly": "^11.2.0"
+  },
+  "build": {
+    "appId": "kr.blockduino.app",
+    "productName": "Blockduino",
+    "files": ["src/**/*", "package.json"],
+    "extraResources": [
+      { "from": "vendor/arduino/win32", "to": "arduino" }
+    ],
+    "win": { "target": "nsis" },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": ["ko_KR"]
+    }
   }
 }
