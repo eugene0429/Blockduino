@@ -1235,7 +1235,7 @@ git commit -m "feat: 서보모터/LCD 블록"
 - Consumes: Task 1 DOM id, `src/shared/blocks/index.js`, `arduinoGenerator`
 - Produces: 전역 앱 상태 객체 `window.appState = { workspace, currentFilePath, dirty }` (Task 9, 11, 12가 사용). `refreshCode()` 함수 — 코드 미리보기 갱신 후 `document.dispatchEvent(new CustomEvent('blockduino:code-updated'))` 발행(Task 12의 배선 탭이 구독).
 
-- [ ] **Step 1: toolbox 정의**
+- [x] **Step 1: toolbox 정의**
 
 `src/renderer/toolbox.js`:
 
@@ -1292,7 +1292,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 2: renderer.js 구현**
+- [x] **Step 2: renderer.js 구현**
 
 `src/renderer/renderer.js`:
 
@@ -1350,7 +1350,7 @@ tabWiring.addEventListener('click', () => selectTab(false));
 window.blockduino = { refreshCode, selectTab };
 ```
 
-- [ ] **Step 3: 수동 확인**
+- [x] **Step 3: 수동 확인**
 
 Run: `npm start`
 Expected:
@@ -1359,12 +1359,12 @@ Expected:
 3. "계속 반복하기" 안에 "LED 13번 핀 켜기"를 끼우면 우측 코드 미리보기에 `pinMode(13, OUTPUT);`와 `digitalWrite(13, HIGH);`가 즉시 나타남
 4. "배선" 탭 클릭 시 빈 패널로 전환 (Task 12에서 채움)
 
-- [ ] **Step 4: 자동 테스트 회귀 확인**
+- [x] **Step 4: 자동 테스트 회귀 확인**
 
 Run: `npx vitest run`
 Expected: PASS (전체)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/renderer
