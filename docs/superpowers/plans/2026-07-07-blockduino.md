@@ -530,7 +530,7 @@ git commit -m "feat: 기본 블록 (시작하면/계속 반복/기다리기)"
 - Consumes: `arduinoGenerator`, `Order`, `varName()` (Task 2)
 - Produces: 다음 내장 블록 타입의 C++ 생성기 — `controls_if`, `logic_compare`, `logic_operation`, `logic_negate`, `logic_boolean`, `controls_repeat_ext`, `controls_whileUntil`, `math_number`(Task 3의 것을 이 파일로 이동), `math_arithmetic`, `variables_get`, `variables_set`, `math_change`, `text`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/blocks-logic.test.js`:
 
@@ -604,12 +604,12 @@ describe('논리/반복/변수 생성기', () => {
 });
 ```
 
-- [ ] **Step 2: 테스트 실패 확인**
+- [x] **Step 2: 테스트 실패 확인**
 
 Run: `npx vitest run tests/blocks-logic.test.js`
 Expected: FAIL — `controls_if` 생성기 미정의 오류
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/shared/blocks/logic.js`:
 
@@ -722,12 +722,12 @@ require('./logic.js');
 
 (주: `variables_get`의 `getFieldValue('VAR')`는 변수 id를 반환하므로 `varName(id)`로 조회한다.)
 
-- [ ] **Step 4: 전체 테스트 통과 확인**
+- [x] **Step 4: 전체 테스트 통과 확인**
 
 Run: `npx vitest run`
 Expected: PASS (generator-core, blocks-basic, blocks-logic 모두)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/blocks tests/blocks-logic.test.js
