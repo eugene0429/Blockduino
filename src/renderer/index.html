@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Blockduino</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="toolbar">
+    <input id="project-name" value="새 프로젝트" />
+    <button id="btn-open">열기</button>
+    <button id="btn-save">저장</button>
+    <span class="spacer"></span>
+    <select id="port-select"><option value="">보드를 연결하세요</option></select>
+    <button id="btn-upload">⬆ 업로드</button>
+  </header>
+  <main>
+    <div id="blocklyDiv"></div>
+    <aside id="side-panel">
+      <nav>
+        <button id="tab-code" class="active">코드</button>
+        <button id="tab-wiring">배선</button>
+      </nav>
+      <pre id="code-preview"></pre>
+      <div id="wiring-panel" hidden></div>
+    </aside>
+  </main>
+  <footer id="status-bar">준비됨</footer>
+  <script src="renderer.js"></script>
+</body>
+</html>

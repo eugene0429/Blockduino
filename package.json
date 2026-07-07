@@ -1,0 +1,20 @@
+{
+  "name": "blockduino",
+  "version": "0.1.0",
+  "description": "초중등 학생용 블록 코딩 아두이노 프로그램",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "vitest run",
+    "prepare-arduino": "node scripts/prepare-arduino.mjs",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "blockly": "^11.2.0"
+  }
+}
