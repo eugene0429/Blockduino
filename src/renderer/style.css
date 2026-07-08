@@ -2,6 +2,7 @@
 html, body { height: 100%; font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; }
 body { display: flex; flex-direction: column; }
 #toolbar { display: flex; gap: 8px; padding: 8px; background: #4c97ff; align-items: center; }
+#app-logo { width: 32px; height: 32px; }
 #toolbar .spacer { flex: 1; }
 #project-name { border: none; border-radius: 4px; padding: 6px 10px; font-size: 15px; width: 200px; }
 #toolbar button, #toolbar select { padding: 6px 14px; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; }
