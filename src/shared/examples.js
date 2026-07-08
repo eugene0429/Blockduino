@@ -4,11 +4,18 @@
 // 배선 카드는 배선 탭이 사용 중인 부품 블록에서 자동으로 그려준다 (wiring.js).
 
 const num = (n) => ({ type: 'math_number', fields: { NUM: n } });
+const led = (pin, state, next) => ({
+  type: 'io_led', fields: { PIN: pin, STATE: state },
+  ...(next ? { next: { block: next } } : {}),
+});
+
+// 센서등 2에서 쓰는 변수 '밝기'의 고정 id
+const BRIGHT_VAR = 'bright-var-id';
 
 const EXAMPLES = [
   {
     id: 'light',
-    title: '센서등',
+    title: '센서등 1',
     description: '어두워지면 LED가 켜져요',
     workspace: { blocks: { languageVersion: 0, blocks: [
       { type: 'basic_setup', x: 40, y: 40 },
@@ -24,6 +31,43 @@ const EXAMPLES = [
         },
       } } } },
     ] } },
+  },
+  {
+    id: 'light2',
+    title: '센서등 2',
+    description: '밝기에 따라 빨강·노랑·초록 불이 켜져요',
+    workspace: {
+      variables: [{ name: '밝기', id: BRIGHT_VAR }],
+      blocks: { languageVersion: 0, blocks: [
+        { type: 'basic_setup', x: 40, y: 40 },
+        { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
+          // 밝기 = 조도 센서 값
+          type: 'variables_set', fields: { VAR: { id: BRIGHT_VAR } },
+          inputs: { VALUE: { block: { type: 'sensor_cds', fields: { PIN: 'A0' } } } },
+          next: { block: {
+            type: 'controls_if', extraState: { elseIfCount: 1, hasElse: true },
+            inputs: {
+              // 어두우면(200 미만) 빨강
+              IF0: { block: { type: 'logic_compare', fields: { OP: 'LT' }, inputs: {
+                A: { block: { type: 'variables_get', fields: { VAR: { id: BRIGHT_VAR } } } },
+                B: { block: num(200) },
+              } } },
+              DO0: { block: led('11', 'HIGH', led('12', 'LOW', led('13', 'LOW'))) },
+              // 조금 어두우면(600 미만) 노랑
+              IF1: { block: { type: 'logic_compare', fields: { OP: 'LT' }, inputs: {
+                A: { block: { type: 'variables_get', fields: { VAR: { id: BRIGHT_VAR } } } },
+                B: { block: num(600) },
+              } } },
+              DO1: { block: led('12', 'HIGH', led('11', 'LOW', led('13', 'LOW'))) },
+              // 밝으면 초록
+              ELSE: { block: led('13', 'HIGH', led('11', 'LOW', led('12', 'LOW'))) },
+            },
+            next: { block: { type: 'basic_delay',
+              inputs: { SECONDS: { block: num(0.2) } } } },
+          } },
+        } } } },
+      ] },
+    },
   },
   {
     id: 'door',

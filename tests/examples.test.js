@@ -14,8 +14,8 @@ function codeOf(id) {
 }
 
 describe('예제 데모', () => {
-  it('예제는 3종이고 모두 로드/코드 생성이 된다', () => {
-    expect(EXAMPLES.map((e) => e.id)).toEqual(['light', 'door', 'fire']);
+  it('예제는 4종이고 모두 로드/코드 생성이 된다', () => {
+    expect(EXAMPLES.map((e) => e.id)).toEqual(['light', 'light2', 'door', 'fire']);
     for (const ex of EXAMPLES) {
       expect(ex.title).toBeTruthy();
       expect(ex.description).toBeTruthy();
@@ -23,12 +23,28 @@ describe('예제 데모', () => {
     }
   });
 
-  it('센서등: 조도 < 300이면 LED 켜고 아니면 끈다', () => {
+  it('센서등 1: 조도 < 300이면 LED 켜고 아니면 끈다', () => {
     const code = codeOf('light');
     expect(code).toContain('if (analogRead(A0) < 300) {');
     expect(code).toContain('digitalWrite(13, HIGH);');
     expect(code).toContain('digitalWrite(13, LOW);');
     expect(code).toContain('pinMode(13, OUTPUT);');
+    expect(EXAMPLES.find((e) => e.id === 'light').title).toBe('센서등 1');
+  });
+
+  it('센서등 2: 밝기 변수 + 3단계 신호등 (빨강/노랑/초록)', () => {
+    const code = codeOf('light2');
+    expect(code).toContain('float var1 = 0;');            // 변수 '밝기'
+    expect(code).toContain('var1 = analogRead(A0);');
+    expect(code).toContain('if (var1 < 200) {');           // 어두움 → 빨강
+    expect(code).toContain('else if (var1 < 600) {');      // 중간 → 노랑
+    expect(code).toContain('digitalWrite(11, HIGH);');
+    expect(code).toContain('digitalWrite(12, HIGH);');
+    expect(code).toContain('digitalWrite(13, HIGH);');
+    for (const pin of [11, 12, 13]) {
+      expect(code).toContain(`pinMode(${pin}, OUTPUT);`);
+      expect(code).toContain(`digitalWrite(${pin}, LOW);`);
+    }
   });
 
   it('자동문: 10cm 이내면 서보 90도 + 1초 대기, 아니면 0도', () => {

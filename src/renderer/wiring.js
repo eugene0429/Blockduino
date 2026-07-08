@@ -415,12 +415,12 @@ const SCENE_HEIGHT = {
 };
 
 // ── 카드 렌더링 ───────────────────────────────────────────────────
-function renderCard(entry, block) {
+function renderCard(entry, block, titleSuffix) {
   const card = document.createElement('div');
   card.className = 'wiring-card';
 
   const title = document.createElement('h4');
-  title.textContent = entry.title;
+  title.textContent = entry.title + (titleSuffix || '');
   card.appendChild(title);
 
   const h = SCENE_HEIGHT[block.type] || 262;
@@ -457,13 +457,26 @@ function renderWiringPanel(workspace, panelEl) {
     panelEl.textContent = '부품 블록을 사용하면 여기에 연결 방법이 나와요.';
     return;
   }
+  const cards = [];
   for (const block of blocks) {
     const entry = WIRING[block.type];
     // 같은 부품+같은 핀 조합은 카드 1장만
     const key = entry.title + JSON.stringify(entry.pins(block));
     if (seen.has(key)) continue;
     seen.add(key);
-    panelEl.appendChild(renderCard(entry, block));
+    cards.push({ entry, block });
+  }
+  // 같은 제목 카드가 여러 장이면 신호 핀 번호로 구분
+  const titleCount = new Map();
+  for (const c of cards) titleCount.set(c.entry.title, (titleCount.get(c.entry.title) || 0) + 1);
+  for (const c of cards) {
+    let suffix = '';
+    if (titleCount.get(c.entry.title) > 1) {
+      const pins = c.entry.pins(c.block);
+      const sig = pins.find((p) => /^[DA]\d/.test(p.boardPin)) || pins[0];
+      suffix = ` — ${sig.boardPin} 핀`;
+    }
+    panelEl.appendChild(renderCard(c.entry, c.block, suffix));
   }
 }
 
