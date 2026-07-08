@@ -3,17 +3,32 @@ import { parseBoardList } from '../src/main/arduino.js';
 import { friendlyError } from '../src/main/messages.js';
 
 describe('parseBoardList', () => {
-  it('시리얼 포트만 추려 Uno 여부와 함께 반환', () => {
+  it('한글 라벨 + 아두이노 우선 정렬, 무관한 포트는 제외', () => {
     const stdout = JSON.stringify({ detected_ports: [
-      { port: { address: 'COM3', protocol: 'serial', label: 'COM3' },
-        matching_boards: [{ name: 'Arduino Uno', fqbn: 'arduino:avr:uno' }] },
-      { port: { address: 'COM4', protocol: 'serial', label: 'COM4' } },
-      { port: { address: '192.168.0.2', protocol: 'network', label: 'net' } },
+      { port: { address: 'COM5', protocol: 'serial', properties: { vid: '0x05AC' } } }, // 기타 장치
+      { port: { address: 'COM4', protocol: 'serial',
+        properties: { vid: '0x1A86', pid: '0x7523' } } },                              // CH340 호환보드
+      { port: { address: 'COM3', protocol: 'serial' },
+        matching_boards: [{ name: 'Arduino Uno', fqbn: 'arduino:avr:uno' }] },          // 정품 우노
+      { port: { address: '/dev/cu.Bluetooth-Incoming-Port', protocol: 'serial' } },     // 숨김
+      { port: { address: '/dev/cu.wlan-debug', protocol: 'serial' } },                  // 숨김
+      { port: { address: '192.168.0.2', protocol: 'network' } },                        // 숨김
     ] });
     expect(parseBoardList(stdout)).toEqual([
-      { port: 'COM3', label: 'COM3 (Arduino Uno)', isUno: true },
-      { port: 'COM4', label: 'COM4', isUno: false },
+      { port: 'COM3', label: '아두이노 보드 (COM3)', isUno: true, rank: 0 },
+      { port: 'COM4', label: '아두이노 호환 보드 (COM4)', isUno: false, rank: 1 },
+      { port: 'COM5', label: '기타 포트 (COM5)', isUno: false, rank: 2 },
     ]);
+  });
+
+  it('FTDI/CP210x 칩도 호환 보드로 인식', () => {
+    const stdout = JSON.stringify({ detected_ports: [
+      { port: { address: 'COM7', protocol: 'serial', properties: { vid: '0x0403' } } },
+      { port: { address: 'COM8', protocol: 'serial', properties: { vid: '0x10C4' } } },
+    ] });
+    const r = parseBoardList(stdout);
+    expect(r.map((p) => p.rank)).toEqual([1, 1]);
+    expect(r[0].label).toBe('아두이노 호환 보드 (COM7)');
   });
 
   it('빈 출력/깨진 JSON → 빈 배열', () => {

@@ -126,14 +126,14 @@ async function refreshPorts() {
   knownPorts = ports;
   const prev = portSelect.value;
   portSelect.innerHTML = '';
-  if (ports.length === 0) {
-    portSelect.add(new Option('보드를 연결하세요', ''));
-  } else {
-    for (const p of ports) portSelect.add(new Option(p.label, p.port));
-    const uno = ports.find((p) => p.isUno);
-    portSelect.value = ports.some((p) => p.port === prev) ? prev
-      : (uno ? uno.port : ports[0].port);
-  }
+  // 아두이노(호환) 보드가 없으면 안내 문구를 기본 선택으로 유지 —
+  // 기타 포트에 실수로 업로드하지 않도록
+  const hasBoard = ports.some((p) => p.rank <= 1);
+  if (!hasBoard) portSelect.add(new Option('보드를 연결하세요', ''));
+  for (const p of ports) portSelect.add(new Option(p.label, p.port));
+  if (ports.some((p) => p.port === prev)) portSelect.value = prev;
+  else if (hasBoard) portSelect.value = ports[0].port; // rank 정렬됨: 아두이노 우선
+  else portSelect.value = '';
 }
 refreshPorts();
 setInterval(refreshPorts, 3000);

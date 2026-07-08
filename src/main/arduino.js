@@ -36,19 +36,33 @@ function runCli(args) {
   });
 }
 
+// 학생용 포트 목록: 무관한 포트는 숨기고, 아두이노(호환)를 한글 라벨로 앞에 정렬.
+// USB 시리얼 칩 제조사 VID: Arduino(2341), Arduino.org(2A03), CH340(1A86),
+// FTDI(0403), CP210x(10C4) — 국내 교육용 호환보드는 대부분 CH340
+const LIKELY_VIDS = new Set(['2341', '2A03', '1A86', '0403', '10C4']);
+const IGNORED_PORTS = /bluetooth|wlan-debug|debug-console/i;
+
 function parseBoardList(stdout) {
   let data;
   try { data = JSON.parse(stdout); } catch { return []; }
   return (data.detected_ports || [])
     .filter((p) => p.port && p.port.protocol === 'serial')
+    .filter((p) => !IGNORED_PORTS.test(p.port.address) && !IGNORED_PORTS.test(p.port.label || ''))
     .map((p) => {
+      const addr = p.port.address;
       const board = (p.matching_boards || [])[0];
-      return {
-        port: p.port.address,
-        label: board ? `${p.port.address} (${board.name})` : p.port.address,
-        isUno: !!board && board.fqbn === FQBN,
-      };
-    });
+      if (board) {
+        return { port: addr, label: `아두이노 보드 (${addr})`,
+          isUno: board.fqbn === FQBN, rank: 0 };
+      }
+      const vid = String((p.port.properties || {}).vid || '')
+        .replace(/^0x/i, '').toUpperCase();
+      if (LIKELY_VIDS.has(vid)) {
+        return { port: addr, label: `아두이노 호환 보드 (${addr})`, isUno: false, rank: 1 };
+      }
+      return { port: addr, label: `기타 포트 (${addr})`, isUno: false, rank: 2 };
+    })
+    .sort((a, b) => a.rank - b.rank);
 }
 
 async function listPorts() {
