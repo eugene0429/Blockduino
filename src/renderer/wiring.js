@@ -339,10 +339,15 @@ function dhtScene(svg, pin) {
     svg.appendChild(svgEl('text', { x: pinXs[i], y: top + 13, 'text-anchor': 'middle', 'font-size': 7.5,
       fill: i === 1 ? '#bbdefb' : '#fff', 'font-family': 'sans-serif' }, t));
   });
-  // 격자 무늬 (DHT11 몸통)
+  // 격자 무늬 (DHT11 몸통) — 몸통 전체 폭에 균등 배치
+  const bodyL = xL - 18;
+  const bodyR = xR + 18;
+  const gridW = 16;
+  const gridStep = (bodyR - bodyL - 24 - gridW) / 3; // 좌우 여백 12px
   for (let gx = 0; gx < 4; gx++) {
     for (let gy = 0; gy < 3; gy++) {
-      svg.appendChild(svgEl('rect', { x: xL - 10 + gx * 25, y: top + 22 + gy * 9, width: 14, height: 5,
+      svg.appendChild(svgEl('rect', {
+        x: bodyL + 12 + gx * gridStep, y: top + 21 + gy * 9, width: gridW, height: 5,
         fill: '#1565c0' }));
     }
   }
