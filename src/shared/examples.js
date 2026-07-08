@@ -73,7 +73,7 @@ const EXAMPLES = [
   },
   {
     id: 'door',
-    title: '자동문',
+    title: '자동문 1',
     description: '가까이 가면 서보모터가 문을 열어요',
     workspace: { blocks: { languageVersion: 0, blocks: [
       { type: 'basic_setup', x: 40, y: 40 },
@@ -140,7 +140,7 @@ const EXAMPLES = [
   },
   {
     id: 'fire',
-    title: '화재 경보기',
+    title: '화재 경보기 1',
     description: '온도가 높아지면 부저가 울려요',
     workspace: { blocks: { languageVersion: 0, blocks: [
       { type: 'basic_setup', x: 40, y: 40 },
