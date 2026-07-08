@@ -22,6 +22,20 @@ Blockly.defineBlocksWithJsonArray([
   { type: 'lcd_clear',
     message0: 'LCD 화면 지우기',
     previousStatement: null, nextStatement: null, colour: 290 },
+  { type: 'motor_servo_effect',
+    message0: '서보모터 %1 번 핀 %2',
+    args0: [
+      { type: 'field_dropdown', name: 'PIN', options: PWM_PINS },
+      { type: 'field_dropdown', name: 'EFFECT', options: [
+        ['왔다갔다 흔들기', 'SWEEP'],
+        ['인사하기 (까딱까딱)', 'NOD'],
+      ] },
+    ],
+    previousStatement: null, nextStatement: null, colour: 290,
+    tooltip: '서보모터로 재미있는 움직임을 만들어요.' },
+  { type: 'lcd_blink',
+    message0: 'LCD 화면 3번 깜빡이기',
+    previousStatement: null, nextStatement: null, colour: 290 },
 ]);
 
 function ensureLcd(gen) {
@@ -50,4 +64,49 @@ g.forBlock['lcd_print'] = function (block, gen) {
 g.forBlock['lcd_clear'] = function (block, gen) {
   ensureLcd(gen);
   return 'lcd.clear();\n';
+};
+
+g.forBlock['motor_servo_effect'] = function (block, gen) {
+  const pin = block.getFieldValue('PIN');
+  gen.addInclude('servo', '#include <Servo.h>');
+  gen.addDeclaration(`servo_${pin}`, `Servo servo_${pin};`);
+  gen.addSetup(`servo_${pin}`, `servo_${pin}.attach(${pin});`);
+  if (block.getFieldValue('EFFECT') === 'SWEEP') {
+    gen.addFunction('servoSweep',
+      'void servoSweep(Servo &s) {\n' +
+      '  for (int a = 0; a <= 180; a += 2) {\n' +
+      '    s.write(a);\n' +
+      '    delay(10);\n' +
+      '  }\n' +
+      '  for (int a = 180; a >= 0; a -= 2) {\n' +
+      '    s.write(a);\n' +
+      '    delay(10);\n' +
+      '  }\n' +
+      '}');
+    return `servoSweep(servo_${pin});\n`;
+  }
+  gen.addFunction('servoNod',
+    'void servoNod(Servo &s) {\n' +
+    '  for (int i = 0; i < 2; i++) {\n' +
+    '    s.write(60);\n' +
+    '    delay(300);\n' +
+    '    s.write(0);\n' +
+    '    delay(300);\n' +
+    '  }\n' +
+    '}');
+  return `servoNod(servo_${pin});\n`;
+};
+
+g.forBlock['lcd_blink'] = function (block, gen) {
+  ensureLcd(gen);
+  gen.addFunction('lcdBlink',
+    'void lcdBlink() {\n' +
+    '  for (int i = 0; i < 3; i++) {\n' +
+    '    lcd.noBacklight();\n' +
+    '    delay(250);\n' +
+    '    lcd.backlight();\n' +
+    '    delay(250);\n' +
+    '  }\n' +
+    '}');
+  return 'lcdBlink();\n';
 };

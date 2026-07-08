@@ -57,6 +57,30 @@ Blockly.defineBlocksWithJsonArray([
     message0: '부저 %1 번 핀 멈추기',
     args0: [{ type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS }],
     previousStatement: null, nextStatement: null, colour: 20 },
+  { type: 'io_led_effect',
+    message0: 'LED %1 번 핀 %2',
+    args0: [
+      { type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS },
+      { type: 'field_dropdown', name: 'EFFECT', options: [
+        ['점사 (빠르게 3번 깜빡)', 'BURST'],
+        ['천천히 5번 깜빡이기', 'BLINK'],
+        ['SOS 신호 보내기', 'SOS'],
+      ] },
+    ],
+    previousStatement: null, nextStatement: null, colour: 20,
+    tooltip: 'LED로 재미있는 불빛 효과를 만들어요.' },
+  { type: 'io_buzzer_melody',
+    message0: '부저 %1 번 핀으로 %2 연주하기',
+    args0: [
+      { type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS },
+      { type: 'field_dropdown', name: 'SONG', options: [
+        ['비행기', 'PLANE'],
+        ['학교종', 'BELL'],
+        ['반짝반짝 작은별', 'STAR'],
+      ] },
+    ],
+    previousStatement: null, nextStatement: null, colour: 20,
+    tooltip: '부저로 동요를 연주해요.' },
 ]);
 
 g.forBlock['io_led'] = g.forBlock['io_digital_write'] = function (block, gen) {
@@ -97,4 +121,85 @@ g.forBlock['io_buzzer_tone'] = function (block, gen) {
 
 g.forBlock['io_buzzer_off'] = function (block) {
   return `noTone(${block.getFieldValue('PIN')});\n`;
+};
+
+g.forBlock['io_led_effect'] = function (block, gen) {
+  const pin = block.getFieldValue('PIN');
+  gen.addSetup(`pinMode_out_${pin}`, `pinMode(${pin}, OUTPUT);`);
+  const effect = block.getFieldValue('EFFECT');
+  if (effect === 'BURST') {
+    gen.addFunction('ledBurst',
+      'void ledBurst(int pin) {\n' +
+      '  for (int i = 0; i < 3; i++) {\n' +
+      '    digitalWrite(pin, HIGH);\n' +
+      '    delay(80);\n' +
+      '    digitalWrite(pin, LOW);\n' +
+      '    delay(80);\n' +
+      '  }\n' +
+      '}');
+    return `ledBurst(${pin});\n`;
+  }
+  if (effect === 'BLINK') {
+    gen.addFunction('ledBlink',
+      'void ledBlink(int pin) {\n' +
+      '  for (int i = 0; i < 5; i++) {\n' +
+      '    digitalWrite(pin, HIGH);\n' +
+      '    delay(400);\n' +
+      '    digitalWrite(pin, LOW);\n' +
+      '    delay(400);\n' +
+      '  }\n' +
+      '}');
+    return `ledBlink(${pin});\n`;
+  }
+  // SOS: 모스 부호 (짧게 3번 · 길게 3번 · 짧게 3번)
+  gen.addFunction('ledSos',
+    'void ledSos(int pin) {\n' +
+    '  int times[] = {150, 150, 150, 450, 450, 450, 150, 150, 150};\n' +
+    '  for (int i = 0; i < 9; i++) {\n' +
+    '    digitalWrite(pin, HIGH);\n' +
+    '    delay(times[i]);\n' +
+    '    digitalWrite(pin, LOW);\n' +
+    '    delay(150);\n' +
+    '  }\n' +
+    '}');
+  return `ledSos(${pin});\n`;
+};
+
+// 동요 악보: 도=262, 레=294, 미=330, 파=349, 솔=392, 라=440, 시=494, 높은도=523
+const MELODIES = {
+  PLANE: { // 비행기 (떴다 떴다 비행기)
+    notes: [330, 294, 262, 294, 330, 330, 330, 294, 294, 294, 330, 392, 392,
+      330, 294, 262, 294, 330, 330, 330, 330, 294, 294, 330, 294, 262],
+    beats: [1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
+  },
+  BELL: { // 학교종
+    notes: [392, 392, 440, 440, 392, 392, 330, 392, 392, 330, 330, 294,
+      392, 392, 440, 440, 392, 392, 330, 392, 330, 294, 330, 262],
+    beats: [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 4,
+      1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 4],
+  },
+  STAR: { // 반짝반짝 작은별
+    notes: [262, 262, 392, 392, 440, 440, 392, 349, 349, 330, 330, 294, 294, 262],
+    beats: [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2],
+  },
+};
+
+g.forBlock['io_buzzer_melody'] = function (block, gen) {
+  const pin = block.getFieldValue('PIN');
+  const song = block.getFieldValue('SONG');
+  const m = MELODIES[song];
+  gen.addFunction('playMelody',
+    'void playMelody(int pin, const int notes[], const int beats[], int length) {\n' +
+    '  for (int i = 0; i < length; i++) {\n' +
+    '    tone(pin, notes[i]);\n' +
+    '    delay(250 * beats[i]);\n' +
+    '    noTone(pin);\n' +
+    '    delay(40);\n' +
+    '  }\n' +
+    '}');
+  gen.addDeclaration(`melody_${song}`,
+    `const int MELODY_${song}_NOTES[] = {${m.notes.join(', ')}};\n` +
+    `const int MELODY_${song}_BEATS[] = {${m.beats.join(', ')}};`);
+  return `playMelody(${pin}, MELODY_${song}_NOTES, MELODY_${song}_BEATS, ${m.notes.length});\n`;
 };

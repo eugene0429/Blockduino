@@ -11,12 +11,14 @@ module.exports = {
     ] },
     { kind: 'category', name: '입출력', colour: '20', contents: [
       { kind: 'block', type: 'io_led' },
+      { kind: 'block', type: 'io_led_effect' },
       { kind: 'block', type: 'io_digital_write' },
       { kind: 'block', type: 'io_digital_read' },
       { kind: 'block', type: 'io_analog_write', inputs: { VALUE: shadowNum(255) } },
       { kind: 'block', type: 'io_analog_read' },
       { kind: 'block', type: 'io_button' },
       { kind: 'block', type: 'io_buzzer_tone' },
+      { kind: 'block', type: 'io_buzzer_melody' },
       { kind: 'block', type: 'io_buzzer_off' },
     ] },
     { kind: 'category', name: '센서', colour: '190', contents: [
@@ -26,8 +28,10 @@ module.exports = {
     ] },
     { kind: 'category', name: '모터/화면', colour: '290', contents: [
       { kind: 'block', type: 'motor_servo', inputs: { ANGLE: shadowNum(90) } },
+      { kind: 'block', type: 'motor_servo_effect' },
       { kind: 'block', type: 'lcd_print', inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: '안녕' } } } } },
       { kind: 'block', type: 'lcd_clear' },
+      { kind: 'block', type: 'lcd_blink' },
     ] },
     { kind: 'category', name: '논리', colour: '210', contents: [
       { kind: 'block', type: 'controls_if' },

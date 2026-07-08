@@ -96,7 +96,11 @@ const WIRING = {
   },
 };
 WIRING.lcd_clear = WIRING.lcd_print;
+WIRING.lcd_blink = WIRING.lcd_print;
 WIRING.io_buzzer_off = WIRING.io_buzzer_tone;
+WIRING.io_buzzer_melody = WIRING.io_buzzer_tone;
+WIRING.io_led_effect = WIRING.io_led;
+WIRING.motor_servo_effect = WIRING.motor_servo;
 WIRING.io_digital_write = {
   title: '디지털 출력 부품 (예: LED)',
   pins: WIRING.io_led.pins,
@@ -397,10 +401,11 @@ function lcdScene(svg) {
 
 // 장면별 세로 크기
 const SCENE_HEIGHT = {
-  motor_servo: 230, lcd_print: 252, lcd_clear: 252,
+  motor_servo: 230, motor_servo_effect: 230,
+  lcd_print: 252, lcd_clear: 252, lcd_blink: 252,
   sensor_ultrasonic: 246, sensor_dht: 242,
-  io_led: 282, io_digital_write: 282, io_button: 268,
-  io_buzzer_tone: 250, io_buzzer_off: 250, sensor_cds: 272,
+  io_led: 282, io_led_effect: 282, io_digital_write: 282, io_button: 268,
+  io_buzzer_tone: 250, io_buzzer_off: 250, io_buzzer_melody: 250, sensor_cds: 272,
 };
 
 // ── 카드 렌더링 ───────────────────────────────────────────────────
