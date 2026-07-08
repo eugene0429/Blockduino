@@ -23,14 +23,8 @@ const COLOR = {
 
 // ── 배선 정보 (범례 텍스트) + 장면(scene) ─────────────────────────
 const WIRING = {
-  io_led: {
-    title: 'LED',
-    pins: (b) => [
-      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: '저항 220Ω → LED 긴 다리(+)', color: COLOR.sig1 },
-      { boardPin: 'GND', partPin: 'LED 짧은 다리(−)', color: COLOR.gnd },
-    ],
-    scene: (svg, b) => ledScene(svg, b.getFieldValue('PIN')),
-  },
+  // LED 계열은 renderWiringPanel에서 핀을 모아 카드 1장(ledsScene)으로 합쳐 그린다
+  io_led: { title: 'LED', ledFamily: true },
   io_button: {
     title: '버튼',
     pins: (b) => [
@@ -101,12 +95,8 @@ WIRING.lcd_blink = WIRING.lcd_print;
 WIRING.io_buzzer_off = WIRING.io_buzzer_tone;
 WIRING.io_buzzer_melody = WIRING.io_buzzer_tone;
 WIRING.io_led_effect = WIRING.io_led;
+WIRING.io_digital_write = WIRING.io_led;
 WIRING.motor_servo_effect = WIRING.motor_servo;
-WIRING.io_digital_write = {
-  title: '디지털 출력 부품 (예: LED)',
-  pins: WIRING.io_led.pins,
-  scene: WIRING.io_led.scene,
-};
 
 // ── SVG 헬퍼 ──────────────────────────────────────────────────────
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -214,20 +204,71 @@ function partLabel(svg, x, y, text) {
 }
 
 // ── 부품 장면들 (브레드보드: 선은 위쪽 줄, 소자는 보드 아래) ──────
-function ledScene(svg, pin) {
-  const uno = drawUno(svg, [`D${pin}`, 'GND']);
+// LED 색상 팔레트: 여러 개일 때 순서대로 빨강 → 노랑 → 초록
+const LED_COLORS = [
+  ['빨강', '#ff5252', '#c62828'],
+  ['노랑', '#ffd600', '#f9a825'],
+  ['초록', '#4caf50', '#2e7d32'],
+];
+const LED_WIRE_COLORS = [COLOR.sig1, COLOR.sig2, COLOR.sig3];
+
+// LED 1~3개를 브레드보드 한 장에 그린다
+function ledsScene(svg, pins) {
+  const n = pins.length;
+  const uno = drawUno(svg, [...pins.map((p) => `D${p}`), 'GND']);
   drawBreadboard(svg);
-  highlightCols(svg, [5, 9, 11]);
-  drawWire(svg, uno[`D${pin}`], { x: holeX(5), y: holeY(0) }, COLOR.sig1);
-  drawWire(svg, uno['GND'], { x: holeX(11), y: holeY(0) }, COLOR.gnd);
-  drawResistor(svg, 5, 9, '저항 220Ω');
-  drawLeg(svg, 9, 236);   // 긴 다리(+)
-  drawLeg(svg, 11, 240);  // 짧은 다리(−)
-  const cx = (holeX(9) + holeX(11)) / 2;
-  svg.appendChild(svgEl('circle', { cx, cy: 248, r: 11, fill: '#ff5252', stroke: '#c62828' }));
-  haloText(svg, { x: holeX(9) - 9, y: 216, 'font-size': 9, fill: '#c62828', 'font-weight': 'bold' }, '+');
-  haloText(svg, { x: holeX(11) + 4, y: 216, 'font-size': 9, fill: '#555', 'font-weight': 'bold' }, '−');
-  partLabel(svg, cx, 274, 'LED');
+  const bases = { 1: [7], 2: [4, 10], 3: [1, 7, 13] }[n];
+  highlightCols(svg, bases.flatMap((b) => [b, b + 2, b + 4]));
+  bases.forEach((b, i) => {
+    drawWire(svg, uno[`D${pins[i]}`], { x: holeX(b), y: holeY(0) }, LED_WIRE_COLORS[i]);
+    drawWire(svg, uno['GND'], { x: holeX(b + 4), y: holeY(0) }, COLOR.gnd);
+  });
+  bases.forEach((b, i) => {
+    drawResistor(svg, b, b + 2, n > 1 ? '220Ω' : '저항 220Ω');
+    drawLeg(svg, b + 2, 236);   // 긴 다리(+)
+    drawLeg(svg, b + 4, 240);   // 짧은 다리(−)
+    const cx = (holeX(b + 2) + holeX(b + 4)) / 2;
+    const [name, fill, stroke] = n > 1 ? LED_COLORS[i] : ['LED', '#ff5252', '#c62828'];
+    svg.appendChild(svgEl('circle', { cx, cy: 248, r: 11, fill, stroke }));
+    haloText(svg, { x: holeX(b + 2) - 9, y: 216, 'font-size': 9, fill: '#c62828', 'font-weight': 'bold' }, '+');
+    haloText(svg, { x: holeX(b + 4) + 4, y: 216, 'font-size': 9, fill: '#555', 'font-weight': 'bold' }, '−');
+    partLabel(svg, cx, 274, n > 1 ? `${name} LED` : 'LED');
+  });
+}
+
+// LED 합본 카드 (그림 + 범례)
+function renderLedsCard(pins) {
+  const card = document.createElement('div');
+  card.className = 'wiring-card';
+  const title = document.createElement('h4');
+  title.textContent = pins.length > 1 ? `LED ${pins.length}개` : 'LED';
+  card.appendChild(title);
+
+  const svg = svgEl('svg', { viewBox: '0 0 360 282', width: '100%' });
+  ledsScene(svg, pins);
+  card.appendChild(svg);
+
+  const legend = document.createElement('ul');
+  legend.className = 'wiring-legend';
+  const entries = pins.map((p, i) => ({
+    boardPin: `D${p}`,
+    partPin: `저항 220Ω → ${pins.length > 1 ? LED_COLORS[i][0] + ' ' : ''}LED 긴 다리(+)`,
+    color: LED_WIRE_COLORS[i],
+  }));
+  entries.push({ boardPin: 'GND',
+    partPin: pins.length > 1 ? '모든 LED 짧은 다리(−)' : 'LED 짧은 다리(−)',
+    color: COLOR.gnd });
+  for (const p of entries) {
+    const li = document.createElement('li');
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    dot.style.background = p.color;
+    li.appendChild(dot);
+    li.appendChild(document.createTextNode(`${p.boardPin} → ${p.partPin}`));
+    legend.appendChild(li);
+  }
+  card.appendChild(legend);
+  return card;
 }
 
 function buttonScene(svg, pin) {
@@ -410,7 +451,7 @@ const SCENE_HEIGHT = {
   motor_servo: 230, motor_servo_effect: 230,
   lcd_print: 252, lcd_clear: 252, lcd_blink: 252,
   sensor_ultrasonic: 246, sensor_dht: 242,
-  io_led: 282, io_led_effect: 282, io_digital_write: 282, io_button: 268,
+  io_button: 268,
   io_buzzer_tone: 250, io_buzzer_off: 250, io_buzzer_melody: 250, sensor_cds: 272,
 };
 
@@ -458,8 +499,15 @@ function renderWiringPanel(workspace, panelEl) {
     return;
   }
   const cards = [];
+  const ledPins = [];
   for (const block of blocks) {
     const entry = WIRING[block.type];
+    if (entry.ledFamily) {
+      // LED 계열은 핀만 모아서 나중에 카드 1장으로 합쳐 그린다
+      const p = block.getFieldValue('PIN');
+      if (!ledPins.includes(p)) ledPins.push(p);
+      continue;
+    }
     // 같은 부품+같은 핀 조합은 카드 1장만
     const key = entry.title + JSON.stringify(entry.pins(block));
     if (seen.has(key)) continue;
@@ -477,6 +525,11 @@ function renderWiringPanel(workspace, panelEl) {
       suffix = ` — ${sig.boardPin} 핀`;
     }
     panelEl.appendChild(renderCard(c.entry, c.block, suffix));
+  }
+  // LED 카드: 핀 3개까지 한 장, 넘으면 나눠서
+  ledPins.sort((a, b) => Number(a) - Number(b));
+  for (let i = 0; i < ledPins.length; i += 3) {
+    panelEl.appendChild(renderLedsCard(ledPins.slice(i, i + 3)));
   }
 }
 

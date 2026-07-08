@@ -9,8 +9,10 @@ const led = (pin, state, next) => ({
   ...(next ? { next: { block: next } } : {}),
 });
 
-// 센서등 2에서 쓰는 변수 '밝기'의 고정 id
-const BRIGHT_VAR = 'bright-var-id';
+// 고급(2번) 예제들이 쓰는 변수의 고정 id
+const BRIGHT_VAR = 'bright-var-id'; // 밝기 (센서등 2)
+const DIST_VAR = 'dist-var-id';     // 거리 (자동문 2)
+const TEMP_VAR = 'temp-var-id';     // 온도 (화재 경보기 2)
 
 const EXAMPLES = [
   {
@@ -97,6 +99,46 @@ const EXAMPLES = [
     ] } },
   },
   {
+    id: 'door2',
+    title: '자동문 2',
+    description: '가까울수록 문이 크게 열려요',
+    workspace: {
+      variables: [{ name: '거리', id: DIST_VAR }],
+      blocks: { languageVersion: 0, blocks: [
+        { type: 'basic_setup', x: 40, y: 40 },
+        { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
+          // 거리 = 초음파 센서 값
+          type: 'variables_set', fields: { VAR: { id: DIST_VAR } },
+          inputs: { VALUE: { block: { type: 'sensor_ultrasonic', fields: { TRIG: '7', ECHO: '6' } } } },
+          next: { block: {
+            type: 'controls_if', extraState: { elseIfCount: 1, hasElse: true },
+            inputs: {
+              // 아주 가까우면(5cm 미만) 활짝
+              IF0: { block: { type: 'logic_compare', fields: { OP: 'LT' }, inputs: {
+                A: { block: { type: 'variables_get', fields: { VAR: { id: DIST_VAR } } } },
+                B: { block: num(5) },
+              } } },
+              DO0: { block: { type: 'motor_servo', fields: { PIN: '9' },
+                inputs: { ANGLE: { block: num(180) } } } },
+              // 가까우면(15cm 미만) 반만
+              IF1: { block: { type: 'logic_compare', fields: { OP: 'LT' }, inputs: {
+                A: { block: { type: 'variables_get', fields: { VAR: { id: DIST_VAR } } } },
+                B: { block: num(15) },
+              } } },
+              DO1: { block: { type: 'motor_servo', fields: { PIN: '9' },
+                inputs: { ANGLE: { block: num(90) } } } },
+              // 멀면 닫기
+              ELSE: { block: { type: 'motor_servo', fields: { PIN: '9' },
+                inputs: { ANGLE: { block: num(0) } } } },
+            },
+            next: { block: { type: 'basic_delay',
+              inputs: { SECONDS: { block: num(0.2) } } } },
+          } },
+        } } } },
+      ] },
+    },
+  },
+  {
     id: 'fire',
     title: '화재 경보기',
     description: '온도가 높아지면 부저가 울려요',
@@ -114,6 +156,49 @@ const EXAMPLES = [
         },
       } } } },
     ] } },
+  },
+  {
+    id: 'fire2',
+    title: '화재 경보기 2',
+    description: '온도 단계에 따라 경보음이 달라져요',
+    workspace: {
+      variables: [{ name: '온도', id: TEMP_VAR }],
+      blocks: { languageVersion: 0, blocks: [
+        { type: 'basic_setup', x: 40, y: 40 },
+        { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
+          // 온도 = 온습도 센서 값
+          type: 'variables_set', fields: { VAR: { id: TEMP_VAR } },
+          inputs: { VALUE: { block: { type: 'sensor_dht', fields: { PIN: '4', MODE: 'TEMP' } } } },
+          next: { block: {
+            type: 'controls_if', extraState: { elseIfCount: 1, hasElse: true },
+            inputs: {
+              // 위험(40도 초과): 높은 음 빠르게 3번
+              IF0: { block: { type: 'logic_compare', fields: { OP: 'GT' }, inputs: {
+                A: { block: { type: 'variables_get', fields: { VAR: { id: TEMP_VAR } } } },
+                B: { block: num(40) },
+              } } },
+              DO0: { block: { type: 'controls_repeat_ext',
+                inputs: {
+                  TIMES: { block: num(3) },
+                  DO: { block: { type: 'io_buzzer_tone',
+                    fields: { PIN: '8', NOTE: '523', BEAT: '0.5' } } },
+                } } },
+              // 주의(30도 초과): 낮은 음 한 번
+              IF1: { block: { type: 'logic_compare', fields: { OP: 'GT' }, inputs: {
+                A: { block: { type: 'variables_get', fields: { VAR: { id: TEMP_VAR } } } },
+                B: { block: num(30) },
+              } } },
+              DO1: { block: { type: 'io_buzzer_tone',
+                fields: { PIN: '8', NOTE: '262', BEAT: '1' } } },
+              // 평상시: 조용히
+              ELSE: { block: { type: 'io_buzzer_off', fields: { PIN: '8' },
+                next: { block: { type: 'basic_delay',
+                  inputs: { SECONDS: { block: num(1) } } } } } },
+            },
+          } },
+        } } } },
+      ] },
+    },
   },
 ];
 

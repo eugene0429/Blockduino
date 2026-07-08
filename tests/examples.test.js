@@ -14,8 +14,8 @@ function codeOf(id) {
 }
 
 describe('예제 데모', () => {
-  it('예제는 4종이고 모두 로드/코드 생성이 된다', () => {
-    expect(EXAMPLES.map((e) => e.id)).toEqual(['light', 'light2', 'door', 'fire']);
+  it('예제는 6종이고 모두 로드/코드 생성이 된다', () => {
+    expect(EXAMPLES.map((e) => e.id)).toEqual(['light', 'light2', 'door', 'door2', 'fire', 'fire2']);
     for (const ex of EXAMPLES) {
       expect(ex.title).toBeTruthy();
       expect(ex.description).toBeTruthy();
@@ -54,6 +54,27 @@ describe('예제 데모', () => {
     expect(code).toContain('servo_9.write(90);');
     expect(code).toContain('delay((1) * 1000);');
     expect(code).toContain('servo_9.write(0);');
+  });
+
+  it('자동문 2: 거리 변수 + 3단계 문 열기 (기존 부품만 사용)', () => {
+    const code = codeOf('door2');
+    expect(code).toContain('var1 = readUltrasonic(7, 6);');   // 변수 '거리'
+    expect(code).toContain('if (var1 < 5) {');                 // 아주 가까움 → 활짝
+    expect(code).toContain('else if (var1 < 15) {');           // 가까움 → 반만
+    expect(code).toContain('servo_9.write(180);');
+    expect(code).toContain('servo_9.write(90);');
+    expect(code).toContain('servo_9.write(0);');
+  });
+
+  it('화재 경보기 2: 온도 변수 + 단계별 경보음 (기존 부품만 사용)', () => {
+    const code = codeOf('fire2');
+    expect(code).toContain('var1 = dht_4.readTemperature();'); // 변수 '온도'
+    expect(code).toContain('if (var1 > 40) {');                 // 위험 → 빠른 경보 3번
+    expect(code).toContain('for (int i = 0; i < 3; i++) {');
+    expect(code).toContain('tone(8, 523);');
+    expect(code).toContain('else if (var1 > 30) {');            // 주의 → 낮은 음
+    expect(code).toContain('tone(8, 262);');
+    expect(code).toContain('noTone(8);');                       // 평상시 → 조용
   });
 
   it('화재 경보기: 온도 > 40이면 경보음', () => {
