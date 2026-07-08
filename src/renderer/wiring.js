@@ -60,10 +60,11 @@ const WIRING = {
   sensor_dht: {
     title: '온습도 센서 (DHT11)',
     pins: (b) => [
-      { boardPin: '5V', partPin: 'VCC(+)', color: COLOR.power },
-      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: 'DATA(out)', color: COLOR.sig1 },
-      { boardPin: 'GND', partPin: 'GND(−)', color: COLOR.gnd },
+      { boardPin: 'GND', partPin: 'GND (1번, 가장 왼쪽)', color: COLOR.gnd },
+      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: 'SIG (3번 핀)', color: COLOR.sig1 },
+      { boardPin: '5V', partPin: 'VCC (4번, 가장 오른쪽)', color: COLOR.power },
     ],
+    note: '2번 핀은 아무것도 연결하지 않아요.',
     scene: (svg, b) => dhtScene(svg, b.getFieldValue('PIN')),
   },
   sensor_cds: {
@@ -321,27 +322,27 @@ function ultrasonicScene(svg, trig, echo) {
 }
 
 function dhtScene(svg, pin) {
-  const labels = ['5V', `D${pin}`, 'GND'];
-  const colors = [COLOR.power, COLOR.sig1, COLOR.gnd];
-  const uno = drawUno(svg, labels);
+  // 실습 키트 DHT11 핀 배열 (격자면 기준 왼쪽부터): GND · 미사용 · SIG · VCC
+  const uno = drawUno(svg, ['GND', `D${pin}`, '5V']);
   const top = 168;
-  const xs = labels.map((l) => uno[l].x);
-  const xL = Math.min(...xs);
-  const xR = Math.max(...xs);
+  const pinXs = [135, 165, 195, 225]; // GND, 안씀, SIG, VCC
+  const xL = pinXs[0];
+  const xR = pinXs[3];
   svg.appendChild(svgEl('rect', { x: xL - 18, y: top, width: xR - xL + 36, height: 52, rx: 3,
     fill: '#42a5f5', stroke: '#1976d2' }));
-  labels.forEach((l, i) => {
-    const stub = drawModulePin(svg, uno[l].x, top);
-    drawWire(svg, uno[l], stub, colors[i]);
-  });
-  ['+', 'out', '−'].forEach((t, i) => {
-    svg.appendChild(svgEl('text', { x: xs[i], y: top + 13, 'text-anchor': 'middle', 'font-size': 8,
-      fill: '#fff', 'font-family': 'sans-serif' }, t));
+  // 핀 스터브 4개 + 연결선 3개 (2번 핀은 연결 안 함)
+  const stubs = pinXs.map((x) => drawModulePin(svg, x, top));
+  drawWire(svg, uno['GND'], stubs[0], COLOR.gnd);
+  drawWire(svg, uno[`D${pin}`], stubs[2], COLOR.sig1);
+  drawWire(svg, uno['5V'], stubs[3], COLOR.power);
+  ['GND', '안씀', 'SIG', 'VCC'].forEach((t, i) => {
+    svg.appendChild(svgEl('text', { x: pinXs[i], y: top + 13, 'text-anchor': 'middle', 'font-size': 7.5,
+      fill: i === 1 ? '#bbdefb' : '#fff', 'font-family': 'sans-serif' }, t));
   });
   // 격자 무늬 (DHT11 몸통)
   for (let gx = 0; gx < 4; gx++) {
     for (let gy = 0; gy < 3; gy++) {
-      svg.appendChild(svgEl('rect', { x: xL - 8 + gx * 20, y: top + 20 + gy * 10, width: 12, height: 6,
+      svg.appendChild(svgEl('rect', { x: xL - 10 + gx * 25, y: top + 22 + gy * 9, width: 14, height: 5,
         fill: '#1565c0' }));
     }
   }
@@ -431,6 +432,12 @@ function renderCard(entry, block) {
     dot.style.background = p.color;
     li.appendChild(dot);
     li.appendChild(document.createTextNode(`${p.boardPin} → ${p.partPin}`));
+    legend.appendChild(li);
+  }
+  if (entry.note) {
+    const li = document.createElement('li');
+    li.className = 'wiring-note';
+    li.textContent = `※ ${entry.note}`;
     legend.appendChild(li);
   }
   card.appendChild(legend);
