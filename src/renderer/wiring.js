@@ -241,19 +241,21 @@ function buttonScene(svg, pin) {
 }
 
 function buzzerScene(svg, pin) {
-  const uno = drawUno(svg, [`D${pin}`, 'GND']);
-  drawBreadboard(svg);
-  highlightCols(svg, [8, 10]);
-  drawWire(svg, uno[`D${pin}`], { x: holeX(8), y: holeY(0) }, COLOR.sig1);
-  drawWire(svg, uno['GND'], { x: holeX(10), y: holeY(0) }, COLOR.gnd);
-  drawLeg(svg, 8, 224);
-  drawLeg(svg, 10, 228);
-  const cx = (holeX(8) + holeX(10)) / 2;
-  svg.appendChild(svgEl('circle', { cx, cy: 240, r: 16, fill: '#212121' }));
-  svg.appendChild(svgEl('circle', { cx, cy: 240, r: 3, fill: '#fafafa' }));
-  haloText(svg, { x: holeX(8) - 9, y: 216, 'font-size': 9, fill: '#c62828', 'font-weight': 'bold' }, '+');
-  haloText(svg, { x: holeX(10) + 4, y: 216, 'font-size': 9, fill: '#555', 'font-weight': 'bold' }, '−');
-  partLabel(svg, cx, 272, '부저');
+  // 부저는 브레드보드 없이 점퍼선으로 직접 연결
+  const labels = [`D${pin}`, 'GND'];
+  const colors = [COLOR.sig1, COLOR.gnd];
+  const uno = drawUno(svg, labels);
+  const xs = labels.map((l) => uno[l].x);
+  const cx = (xs[0] + xs[1]) / 2;
+  labels.forEach((l, i) => {
+    const stub = drawModulePin(svg, uno[l].x, 186);
+    drawWire(svg, uno[l], stub, colors[i]);
+  });
+  svg.appendChild(svgEl('circle', { cx, cy: 202, r: 20, fill: '#212121' }));
+  svg.appendChild(svgEl('circle', { cx, cy: 202, r: 3.5, fill: '#fafafa' }));
+  haloText(svg, { x: xs[0] - 9, y: 180, 'font-size': 9, fill: '#c62828', 'font-weight': 'bold' }, '+');
+  haloText(svg, { x: xs[1] + 4, y: 180, 'font-size': 9, fill: '#555', 'font-weight': 'bold' }, '−');
+  partLabel(svg, cx, 240, '부저 (점퍼선으로 직접 연결)');
 }
 
 function cdsScene(svg, analogPin) {
@@ -398,7 +400,7 @@ const SCENE_HEIGHT = {
   motor_servo: 230, lcd_print: 252, lcd_clear: 252,
   sensor_ultrasonic: 246, sensor_dht: 242,
   io_led: 282, io_digital_write: 282, io_button: 268,
-  io_buzzer_tone: 280, io_buzzer_off: 280, sensor_cds: 272,
+  io_buzzer_tone: 250, io_buzzer_off: 250, sensor_cds: 272,
 };
 
 // ── 카드 렌더링 ───────────────────────────────────────────────────
