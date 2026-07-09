@@ -202,4 +202,64 @@ const EXAMPLES = [
   },
 ];
 
+// ── 연습(practice) 배치 ──────────────────────────────────────────
+// 정답을 복제한 뒤 예제별로 "일부 값 오답 + 일부 블록 분리" 변형을 적용한다.
+// 필요한 블록은 전부 보드 위에 있게 유지 (분리만 하고 삭제하지 않음).
+
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+// 부모 입력에서 블록을 떼어 작업 공간에 띄운다
+function detach(ws, parentInputs, inputName, x, y) {
+  const block = parentInputs[inputName].block;
+  delete parentInputs[inputName];
+  block.x = x;
+  block.y = y;
+  ws.blocks.blocks.push(block);
+}
+
+const PRACTICE_TWEAKS = {
+  light(ws) {
+    const ifb = ws.blocks.blocks[1].inputs.BODY.block;
+    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 100;  // 기준값 300 → 100
+    ifb.inputs.DO0.block.fields.PIN = '12';                // LED 핀 13 → 12
+    detach(ws, ifb.inputs, 'ELSE', 480, 60);               // LED 끄기 분리
+  },
+  light2(ws) {
+    const ifb = ws.blocks.blocks[1].inputs.BODY.block.next.block;
+    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 600;  // 기준값 200 → 600
+    ifb.inputs.DO1.block.fields.PIN = '10';                // 노랑 LED 핀 12 → 10
+    detach(ws, ifb.inputs, 'ELSE', 520, 60);               // 초록 체인 분리
+  },
+  door(ws) {
+    const ifb = ws.blocks.blocks[1].inputs.BODY.block;
+    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 50;   // 거리 10 → 50
+    ifb.inputs.DO0.block.inputs.ANGLE.block.fields.NUM = 30; // 각도 90 → 30
+    detach(ws, ifb.inputs, 'ELSE', 480, 60);               // 문 닫기 서보 분리
+  },
+  door2(ws) {
+    const ifb = ws.blocks.blocks[1].inputs.BODY.block.next.block;
+    ifb.inputs.IF1.block.inputs.B.block.fields.NUM = 150;  // 거리 15 → 150
+    ifb.inputs.DO1.block.inputs.ANGLE.block.fields.NUM = 10; // 각도 90 → 10
+    detach(ws, ifb.inputs, 'DO0', 520, 60);                // 활짝 열기 서보 분리
+  },
+  fire(ws) {
+    const ifb = ws.blocks.blocks[1].inputs.BODY.block;
+    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 10;   // 온도 40 → 10
+    detach(ws, ifb.inputs, 'DO0', 480, 60);                // 부저 분리
+    ws.blocks.blocks[2].fields.PIN = '3';                  // 부저 핀 8 → 3
+  },
+  fire2(ws) {
+    const ifb = ws.blocks.blocks[1].inputs.BODY.block.next.block;
+    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 15;   // 온도 40 → 15
+    ifb.inputs.DO0.block.inputs.TIMES.block.fields.NUM = 1; // 반복 3 → 1
+    detach(ws, ifb.inputs, 'DO1', 520, 60);                // 주의 경보 부저 분리
+  },
+};
+
+for (const ex of EXAMPLES) {
+  const practice = clone(ex.workspace);
+  PRACTICE_TWEAKS[ex.id](practice);
+  ex.practice = practice;
+}
+
 module.exports = { EXAMPLES };

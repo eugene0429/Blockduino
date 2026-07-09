@@ -77,6 +77,31 @@ describe('예제 데모', () => {
     expect(code).toContain('noTone(8);');                       // 평상시 → 조용
   });
 
+  it('모든 예제에 연습 배치가 있다 — 정답과 다르지만 블록 개수는 같다', () => {
+    for (const ex of EXAMPLES) {
+      expect(ex.practice, ex.id).toBeTruthy();
+      expect(JSON.stringify(ex.practice)).not.toBe(JSON.stringify(ex.workspace));
+      const a = new Blockly.Workspace();
+      const p = new Blockly.Workspace();
+      Blockly.serialization.workspaces.load(ex.workspace, a);
+      Blockly.serialization.workspaces.load(ex.practice, p);
+      // 필요한 블록은 전부 보드 위에 있어야 한다 (분리만 되고 없어지진 않음)
+      expect(p.getAllBlocks(false).length, ex.id).toBe(a.getAllBlocks(false).length);
+      // 연습 배치도 코드 생성이 가능해야 한다 (크래시 없음)
+      expect(() => g.workspaceToCode(p), ex.id).not.toThrow();
+      a.dispose();
+      p.dispose();
+    }
+  });
+
+  it('연습 배치에는 분리된(떠 있는) 블록이 있다', () => {
+    for (const ex of EXAMPLES) {
+      const topBlocks = ex.practice.blocks.blocks.length;
+      const answerTop = ex.workspace.blocks.blocks.length;
+      expect(topBlocks, ex.id).toBeGreaterThan(answerTop);
+    }
+  });
+
   it('화재 경보기: 온도 > 40이면 경보음', () => {
     const code = codeOf('fire');
     expect(code).toContain('DHT dht_4(4, DHT11);');

@@ -18,7 +18,7 @@ const workspace = Blockly.inject('blocklyDiv', {
   sounds: false,
 });
 
-window.appState = { workspace, currentFilePath: null, dirty: false };
+window.appState = { workspace, currentFilePath: null, dirty: false, currentExample: null };
 
 // 새 프로젝트 기본 블록: 시작하면 + 계속 반복하기
 // Blockly 이벤트는 비동기로 플러시되므로, 프로그램적 로드 중에는 이벤트를 꺼서
@@ -103,6 +103,8 @@ async function openProject() {
   }
   window.appState.currentFilePath = result.filePath;
   window.appState.dirty = false;
+  window.appState.currentExample = null;
+  document.getElementById('btn-answer').disabled = true;
   document.getElementById('project-name').value = path.basename(result.filePath, '.bdn');
   refreshCode();
   setStatus('프로젝트를 열었어요');
@@ -183,22 +185,65 @@ const exampleSelect = document.getElementById('example-select');
 for (const ex of EXAMPLES) {
   exampleSelect.add(new Option(`${ex.title} — ${ex.description}`, ex.id));
 }
+const btnAnswer = document.getElementById('btn-answer');
+
+function loadWorkspaceJson(json) {
+  Blockly.Events.disable();
+  try {
+    Blockly.serialization.workspaces.load(json, workspace);
+  } finally {
+    Blockly.Events.enable();
+  }
+  refreshCode();
+  window.appState.dirty = false;
+}
+
 exampleSelect.addEventListener('change', async () => {
   const ex = EXAMPLES.find((e) => e.id === exampleSelect.value);
   exampleSelect.value = '';
   if (!ex) return;
   if (window.appState.dirty &&
       !(await ipcRenderer.invoke('confirm-discard'))) return;
-  Blockly.Events.disable();
-  try {
-    Blockly.serialization.workspaces.load(ex.workspace, workspace);
-  } finally {
-    Blockly.Events.enable();
-  }
+  // 기본은 연습 배치: 일부 값이 다르고 일부 블록이 떨어져 있다
+  loadWorkspaceJson(ex.practice);
   window.appState.currentFilePath = null;
+  window.appState.currentExample = ex;
+  btnAnswer.disabled = false;
   document.getElementById('project-name').value = ex.title;
-  refreshCode();
-  window.appState.dirty = false;
   selectTab(false); // 배선 탭으로 전환해 연결 그림을 바로 보여줌
-  setStatus(`예제 '${ex.title}'을(를) 열었어요. 배선 탭에서 연결 방법을 확인하세요`);
+  setStatus(`예제 '${ex.title}'을(를) 열었어요. 떨어진 블록을 연결하고 값을 고쳐 완성해 보세요`);
+});
+
+// ── 정답 보기 (관리자 비밀번호 필요) ────────────────────
+// 배포 전에 원하는 비밀번호로 바꿔 주세요.
+const ANSWER_PASSWORD = '0000';
+const answerDialog = document.getElementById('answer-dialog');
+const answerInput = document.getElementById('answer-password');
+const answerError = document.getElementById('answer-error');
+
+btnAnswer.addEventListener('click', () => {
+  if (!window.appState.currentExample) return;
+  answerInput.value = '';
+  answerError.hidden = true;
+  answerDialog.showModal();
+  answerInput.focus();
+});
+
+function tryShowAnswer() {
+  if (answerInput.value !== ANSWER_PASSWORD) {
+    answerError.hidden = false;
+    answerInput.value = '';
+    answerInput.focus();
+    return;
+  }
+  answerDialog.close();
+  const ex = window.appState.currentExample;
+  loadWorkspaceJson(ex.workspace);
+  setStatus(`'${ex.title}' 정답 블록으로 바꿨어요`);
+}
+
+document.getElementById('answer-ok').addEventListener('click', tryShowAnswer);
+document.getElementById('answer-cancel').addEventListener('click', () => answerDialog.close());
+answerInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') tryShowAnswer();
 });

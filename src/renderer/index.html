@@ -12,6 +12,7 @@
     <button id="btn-open">열기</button>
     <button id="btn-save">저장</button>
     <select id="example-select"><option value="">예제 열기…</option></select>
+    <button id="btn-answer" disabled>정답 보기</button>
     <span class="spacer"></span>
     <select id="port-select"><option value="">보드를 연결하세요</option></select>
     <button id="btn-upload">⬆ 업로드</button>
@@ -28,6 +29,16 @@
     </aside>
   </main>
   <footer id="status-bar">준비됨</footer>
+  <dialog id="answer-dialog">
+    <h3>선생님 확인</h3>
+    <p>정답 블록을 보려면 관리자 비밀번호를 입력하세요.</p>
+    <input id="answer-password" type="password" placeholder="비밀번호" />
+    <p id="answer-error" hidden>비밀번호가 맞지 않아요.</p>
+    <div class="dialog-actions">
+      <button id="answer-cancel">취소</button>
+      <button id="answer-ok">확인</button>
+    </div>
+  </dialog>
   <dialog id="error-dialog">
     <h3 id="error-message"></h3>
     <p id="ch340-hint" hidden>
