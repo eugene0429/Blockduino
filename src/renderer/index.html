@@ -25,7 +25,13 @@
         <button id="tab-wiring">배선</button>
       </nav>
       <pre id="code-preview"></pre>
-      <div id="wiring-panel" hidden></div>
+      <div id="wiring-container" hidden>
+        <label id="wiring-lock-row">
+          <input type="checkbox" id="wiring-lock" disabled />
+          배선 고정 — 블록과 상관없이 예제의 정답 배선을 보여줘요
+        </label>
+        <div id="wiring-panel"></div>
+      </div>
     </aside>
   </main>
   <footer id="status-bar">준비됨</footer>

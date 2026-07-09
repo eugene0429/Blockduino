@@ -94,12 +94,58 @@ describe('예제 데모', () => {
     }
   });
 
-  it('연습 배치에는 분리된(떠 있는) 블록이 있다', () => {
+  it('연습 배치는 모든 블록이 분리되어 있다', () => {
     for (const ex of EXAMPLES) {
-      const topBlocks = ex.practice.blocks.blocks.length;
-      const answerTop = ex.workspace.blocks.blocks.length;
-      expect(topBlocks, ex.id).toBeGreaterThan(answerTop);
+      const a = new Blockly.Workspace();
+      Blockly.serialization.workspaces.load(ex.workspace, a);
+      const total = a.getAllBlocks(false).length;
+      a.dispose();
+      // 최상위 블록 수 == 전체 블록 수 → 연결된 블록이 하나도 없음
+      expect(ex.practice.blocks.blocks.length, ex.id).toBe(total);
+      for (const b of ex.practice.blocks.blocks) {
+        expect(b.inputs, `${ex.id}:${b.type}`).toBeUndefined();
+        expect(b.next, `${ex.id}:${b.type}`).toBeUndefined();
+      }
     }
+  });
+
+  it('연습 배치는 채워야 하는 값들이 전부 정답과 다르다', () => {
+    const CHECK_FIELDS = ['NUM', 'PIN', 'TRIG', 'ECHO', 'STATE', 'MODE', 'OP', 'NOTE', 'BEAT'];
+    // 연습 배치는 정답과 같은 순회 순서로 블록을 분리하므로 위치별 비교가 가능하다
+    const values = (ws) => {
+      const out = [];
+      const walk = (b) => {
+        for (const key of CHECK_FIELDS) {
+          if (b.fields && b.fields[key] !== undefined) {
+            out.push({ slot: `${b.type}.${key}`, value: String(b.fields[key]) });
+          }
+        }
+        if (b.inputs) for (const k of Object.keys(b.inputs)) walk(b.inputs[k].block);
+        if (b.next) walk(b.next.block);
+      };
+      ws.blocks.blocks.forEach(walk);
+      return out;
+    };
+    for (const ex of EXAMPLES) {
+      const answer = values(ex.workspace);
+      const practice = values(ex.practice);
+      expect(practice.length, ex.id).toBe(answer.length);
+      answer.forEach((a, i) => {
+        // 같은 자리(블록·필드)인데 값은 전부 달라야 한다
+        expect(practice[i].slot, `${ex.id} #${i}`).toBe(a.slot);
+        expect(practice[i].value, `${ex.id} ${a.slot}`).not.toBe(a.value);
+      });
+    }
+  });
+
+  it('센서등 1 연습도 LED는 한 개만 사용 (두 LED 블록의 핀이 같다)', () => {
+    const light = EXAMPLES.find((e) => e.id === 'light');
+    const ledPins = light.practice.blocks.blocks
+      .filter((b) => b.type === 'io_led')
+      .map((b) => b.fields.PIN);
+    expect(ledPins.length).toBe(2);
+    expect(new Set(ledPins).size).toBe(1); // 같은 핀 = LED 1개
+    expect(ledPins[0]).not.toBe('13');     // 단, 정답 핀은 아님
   });
 
   it('화재 경보기: 온도 > 40이면 경보음', () => {

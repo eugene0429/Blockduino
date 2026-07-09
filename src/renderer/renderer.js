@@ -54,13 +54,37 @@ function selectTab(showCode) {
   tabCode.classList.toggle('active', showCode);
   tabWiring.classList.toggle('active', !showCode);
   document.getElementById('code-preview').hidden = !showCode;
-  document.getElementById('wiring-panel').hidden = showCode;
+  document.getElementById('wiring-container').hidden = showCode;
 }
 tabCode.addEventListener('click', () => selectTab(true));
 tabWiring.addEventListener('click', () => selectTab(false));
-document.addEventListener('blockduino:code-updated', () =>
-  renderWiringPanel(workspace, document.getElementById('wiring-panel')));
-renderWiringPanel(workspace, document.getElementById('wiring-panel'));
+
+// ── 배선 고정: 체크되면 현재 블록 대신 예제 정답 기준으로 배선을 그린다 ──
+const wiringLock = document.getElementById('wiring-lock');
+let answerWiringWs = null; // 예제 정답을 로드해 둔 헤드리스 워크스페이스
+
+function renderWiring() {
+  const source = wiringLock.checked && answerWiringWs ? answerWiringWs : workspace;
+  renderWiringPanel(source, document.getElementById('wiring-panel'));
+}
+function setWiringLockExample(exampleOrNull) {
+  if (answerWiringWs) {
+    answerWiringWs.dispose();
+    answerWiringWs = null;
+  }
+  if (exampleOrNull) {
+    answerWiringWs = new Blockly.Workspace();
+    Blockly.serialization.workspaces.load(exampleOrNull.workspace, answerWiringWs);
+    wiringLock.disabled = false;
+    wiringLock.checked = true; // 예제는 자동으로 배선 고정
+  } else {
+    wiringLock.checked = false;
+    wiringLock.disabled = true;
+  }
+}
+wiringLock.addEventListener('change', renderWiring);
+document.addEventListener('blockduino:code-updated', renderWiring);
+renderWiring();
 
 window.blockduino = { refreshCode, selectTab };
 
@@ -105,6 +129,8 @@ async function openProject() {
   window.appState.dirty = false;
   window.appState.currentExample = null;
   document.getElementById('btn-answer').disabled = true;
+  setWiringLockExample(null);
+  renderWiring();
   document.getElementById('project-name').value = path.basename(result.filePath, '.bdn');
   refreshCode();
   setStatus('프로젝트를 열었어요');
@@ -204,7 +230,9 @@ exampleSelect.addEventListener('change', async () => {
   if (!ex) return;
   if (window.appState.dirty &&
       !(await ipcRenderer.invoke('confirm-discard'))) return;
-  // 기본은 연습 배치: 일부 값이 다르고 일부 블록이 떨어져 있다
+  // 기본은 연습 배치: 모든 블록이 분리되어 있고 값도 전부 정답과 다르다.
+  // 배선 고정을 먼저 켜서 배선 탭은 정답 기준으로 그려지게 한다.
+  setWiringLockExample(ex);
   loadWorkspaceJson(ex.practice);
   window.appState.currentFilePath = null;
   window.appState.currentExample = ex;

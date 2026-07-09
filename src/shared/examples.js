@@ -203,63 +203,71 @@ const EXAMPLES = [
 ];
 
 // ── 연습(practice) 배치 ──────────────────────────────────────────
-// 정답을 복제한 뒤 예제별로 "일부 값 오답 + 일부 블록 분리" 변형을 적용한다.
-// 필요한 블록은 전부 보드 위에 있게 유지 (분리만 하고 삭제하지 않음).
+// 정답을 복제한 뒤 (1) 모든 블록을 분리해 격자로 흩어 놓고
+// (2) 채워야 하는 값(숫자·핀·켜기/끄기·비교·음계 등)을 전부 오답으로 바꾼다.
+// 같은 정답 값은 같은 오답 값으로 바뀌므로 부품 개수는 정답과 동일하게 유지된다
+// (예: 센서등 1의 LED 두 블록은 연습에서도 같은 핀 = LED 1개).
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
-// 부모 입력에서 블록을 떼어 작업 공간에 띄운다
-function detach(ws, parentInputs, inputName, x, y) {
-  const block = parentInputs[inputName].block;
-  delete parentInputs[inputName];
-  block.x = x;
-  block.y = y;
-  ws.blocks.blocks.push(block);
+const PWM_ORDER = ['3', '5', '6', '9', '10', '11'];
+
+function wrongPin(blockType, value) {
+  if (/^A\d$/.test(value)) return 'A' + ((Number(value[1]) + 1) % 6); // A0~A5
+  if (blockType === 'motor_servo') { // 서보는 PWM 핀 안에서만 이동
+    return PWM_ORDER[(PWM_ORDER.indexOf(value) + 1) % PWM_ORDER.length];
+  }
+  return String((Number(value) + 1) % 14); // D0~D13
 }
 
-const PRACTICE_TWEAKS = {
-  light(ws) {
-    const ifb = ws.blocks.blocks[1].inputs.BODY.block;
-    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 100;  // 기준값 300 → 100
-    ifb.inputs.DO0.block.fields.PIN = '12';                // LED 핀 13 → 12
-    detach(ws, ifb.inputs, 'ELSE', 480, 60);               // LED 끄기 분리
-  },
-  light2(ws) {
-    const ifb = ws.blocks.blocks[1].inputs.BODY.block.next.block;
-    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 600;  // 기준값 200 → 600
-    ifb.inputs.DO1.block.fields.PIN = '10';                // 노랑 LED 핀 12 → 10
-    detach(ws, ifb.inputs, 'ELSE', 520, 60);               // 초록 체인 분리
-  },
-  door(ws) {
-    const ifb = ws.blocks.blocks[1].inputs.BODY.block;
-    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 50;   // 거리 10 → 50
-    ifb.inputs.DO0.block.inputs.ANGLE.block.fields.NUM = 30; // 각도 90 → 30
-    detach(ws, ifb.inputs, 'ELSE', 480, 60);               // 문 닫기 서보 분리
-  },
-  door2(ws) {
-    const ifb = ws.blocks.blocks[1].inputs.BODY.block.next.block;
-    ifb.inputs.IF1.block.inputs.B.block.fields.NUM = 150;  // 거리 15 → 150
-    ifb.inputs.DO1.block.inputs.ANGLE.block.fields.NUM = 10; // 각도 90 → 10
-    detach(ws, ifb.inputs, 'DO0', 520, 60);                // 활짝 열기 서보 분리
-  },
-  fire(ws) {
-    const ifb = ws.blocks.blocks[1].inputs.BODY.block;
-    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 10;   // 온도 40 → 10
-    detach(ws, ifb.inputs, 'DO0', 480, 60);                // 부저 분리
-    ws.blocks.blocks[2].fields.PIN = '3';                  // 부저 핀 8 → 3
-  },
-  fire2(ws) {
-    const ifb = ws.blocks.blocks[1].inputs.BODY.block.next.block;
-    ifb.inputs.IF0.block.inputs.B.block.fields.NUM = 15;   // 온도 40 → 15
-    ifb.inputs.DO0.block.inputs.TIMES.block.fields.NUM = 1; // 반복 3 → 1
-    detach(ws, ifb.inputs, 'DO1', 520, 60);                // 주의 경보 부저 분리
-  },
-};
-
-for (const ex of EXAMPLES) {
-  const practice = clone(ex.workspace);
-  PRACTICE_TWEAKS[ex.id](practice);
-  ex.practice = practice;
+function mutateFields(block) {
+  const f = block.fields;
+  if (!f) return;
+  if (block.type === 'math_number') {
+    f.NUM = f.NUM === 0 ? 1 : 0;
+    return;
+  }
+  for (const key of Object.keys(f)) {
+    const v = f[key];
+    if (key === 'PIN' || key === 'TRIG' || key === 'ECHO') f[key] = wrongPin(block.type, v);
+    else if (key === 'STATE') f[key] = v === 'HIGH' ? 'LOW' : 'HIGH';
+    else if (key === 'MODE') f[key] = v === 'TEMP' ? 'HUM' : 'TEMP';
+    else if (key === 'OP') f[key] = v === 'LT' ? 'GT' : (v === 'GT' ? 'LT' : v);
+    else if (key === 'NOTE') f[key] = v === '523' ? '262' : '523';
+    else if (key === 'BEAT') f[key] = v === '1' ? '0.5' : '1';
+    // VAR(변수 참조) 등 나머지는 그대로 둔다
+  }
 }
+
+// 블록 트리를 평평하게: 자신을 목록에 넣고 모든 연결(inputs/next)을 끊는다
+function collectDetached(block, out) {
+  out.push(block);
+  if (block.inputs) {
+    for (const name of Object.keys(block.inputs)) {
+      const child = block.inputs[name].block;
+      if (child) collectDetached(child, out);
+    }
+    delete block.inputs;
+  }
+  if (block.next) {
+    collectDetached(block.next.block, out);
+    delete block.next;
+  }
+}
+
+function makePractice(answer) {
+  const ws = clone(answer);
+  const flat = [];
+  for (const top of ws.blocks.blocks) collectDetached(top, flat);
+  flat.forEach((block, i) => {
+    mutateFields(block);
+    block.x = 40 + (i % 4) * 240;
+    block.y = 40 + Math.floor(i / 4) * 110;
+  });
+  ws.blocks.blocks = flat;
+  return ws;
+}
+
+for (const ex of EXAMPLES) ex.practice = makePractice(ex.workspace);
 
 module.exports = { EXAMPLES };
