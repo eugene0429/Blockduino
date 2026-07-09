@@ -4,3 +4,4 @@ vendor/
 *.log
 .claude/settings.local.json
 .superpowers/
+.DS_Store
