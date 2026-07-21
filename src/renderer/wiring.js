@@ -53,12 +53,12 @@ const WIRING = {
   },
   sensor_dht: {
     title: '온습도 센서 (DHT11)',
+    // 3핀 모듈: 위에서 봤을 때 왼쪽부터 VCC · DATA · GND
     pins: (b) => [
-      { boardPin: 'GND', partPin: 'GND (1번, 가장 왼쪽)', color: COLOR.gnd },
-      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: 'SIG (3번 핀)', color: COLOR.sig1 },
-      { boardPin: '5V', partPin: 'VCC (4번, 가장 오른쪽)', color: COLOR.power },
+      { boardPin: '5V', partPin: 'VCC (왼쪽)', color: COLOR.power },
+      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: 'DATA (가운데)', color: COLOR.sig1 },
+      { boardPin: 'GND', partPin: 'GND (오른쪽)', color: COLOR.gnd },
     ],
-    note: '2번 핀은 아무것도 연결하지 않아요.',
     scene: (svg, b) => dhtScene(svg, b.getFieldValue('PIN')),
   },
   sensor_cds: {
@@ -363,26 +363,30 @@ function ultrasonicScene(svg, trig, echo) {
 }
 
 function dhtScene(svg, pin) {
-  // 실습 키트 DHT11 핀 배열 (격자면 기준 왼쪽부터): GND · 미사용 · SIG · VCC
-  const uno = drawUno(svg, ['GND', `D${pin}`, '5V']);
+  // 3핀 DHT11 모듈 (위에서 봤을 때 왼쪽부터): VCC · DATA · GND
+  const labels = ['5V', `D${pin}`, 'GND'];
+  const colors = [COLOR.power, COLOR.sig1, COLOR.gnd];
+  const texts = ['VCC', 'DATA', 'GND'];
+  const uno = drawUno(svg, labels);
   const top = 168;
-  const pinXs = [135, 165, 195, 225]; // GND, 안씀, SIG, VCC
-  const xL = pinXs[0];
-  const xR = pinXs[3];
-  svg.appendChild(svgEl('rect', { x: xL - 18, y: top, width: xR - xL + 36, height: 52, rx: 3,
+  const xs = labels.map((l) => uno[l].x);
+  const xL = Math.min(...xs);
+  const xR = Math.max(...xs);
+  // 몸통 (핀 헤더가 위, 격자면이 아래)
+  svg.appendChild(svgEl('rect', { x: xL - 20, y: top, width: xR - xL + 40, height: 52, rx: 3,
     fill: '#42a5f5', stroke: '#1976d2' }));
-  // 핀 스터브 4개 + 연결선 3개 (2번 핀은 연결 안 함)
-  const stubs = pinXs.map((x) => drawModulePin(svg, x, top));
-  drawWire(svg, uno['GND'], stubs[0], COLOR.gnd);
-  drawWire(svg, uno[`D${pin}`], stubs[2], COLOR.sig1);
-  drawWire(svg, uno['5V'], stubs[3], COLOR.power);
-  ['GND', '안씀', 'SIG', 'VCC'].forEach((t, i) => {
-    svg.appendChild(svgEl('text', { x: pinXs[i], y: top + 13, 'text-anchor': 'middle', 'font-size': 7.5,
-      fill: i === 1 ? '#bbdefb' : '#fff', 'font-family': 'sans-serif' }, t));
+  // 핀 스터브 3개 + 연결선 3개 (우노 핀과 x좌표를 맞춰 일직선)
+  labels.forEach((l, i) => {
+    const stub = drawModulePin(svg, uno[l].x, top);
+    drawWire(svg, uno[l], stub, colors[i]);
+  });
+  texts.forEach((t, i) => {
+    svg.appendChild(svgEl('text', { x: xs[i], y: top + 13, 'text-anchor': 'middle', 'font-size': 7.5,
+      fill: '#fff', 'font-family': 'sans-serif' }, t));
   });
   // 격자 무늬 (DHT11 몸통) — 몸통 전체 폭에 균등 배치
-  const bodyL = xL - 18;
-  const bodyR = xR + 18;
+  const bodyL = xL - 20;
+  const bodyR = xR + 20;
   const gridW = 16;
   const gridStep = (bodyR - bodyL - 24 - gridW) / 3; // 좌우 여백 12px
   for (let gx = 0; gx < 4; gx++) {

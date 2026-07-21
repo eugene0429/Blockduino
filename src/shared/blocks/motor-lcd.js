@@ -51,6 +51,7 @@ g.forBlock['motor_servo'] = function (block, gen) {
   gen.addInclude('servo', '#include <Servo.h>');
   gen.addDeclaration(`servo_${pin}`, `Servo servo_${pin};`);
   gen.addSetup(`servo_${pin}`, `servo_${pin}.attach(${pin});`);
+  gen.servoUsed_ = true; // loop 끝 지터 방지 지연 트리거
   return `servo_${pin}.write(${angle});\n`;
 };
 
@@ -71,6 +72,7 @@ g.forBlock['motor_servo_effect'] = function (block, gen) {
   gen.addInclude('servo', '#include <Servo.h>');
   gen.addDeclaration(`servo_${pin}`, `Servo servo_${pin};`);
   gen.addSetup(`servo_${pin}`, `servo_${pin}.attach(${pin});`);
+  gen.servoUsed_ = true; // loop 끝 지터 방지 지연 트리거
   if (block.getFieldValue('EFFECT') === 'SWEEP') {
     gen.addFunction('servoSweep',
       'void servoSweep(Servo &s) {\n' +

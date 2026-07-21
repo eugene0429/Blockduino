@@ -1,11 +1,18 @@
 * { box-sizing: border-box; margin: 0; }
 html, body { height: 100%; font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; }
 body { display: flex; flex-direction: column; }
-#toolbar { display: flex; gap: 8px; padding: 8px; background: #4c97ff; align-items: center; }
-#app-logo { width: 32px; height: 32px; }
-#toolbar .spacer { flex: 1; }
-#project-name { border: none; border-radius: 4px; padding: 6px 10px; font-size: 15px; width: 200px; }
-#toolbar button, #toolbar select { padding: 6px 14px; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; }
+/* 항목이 많아 한 줄에 안 들어가면 다음 줄로 넘긴다(찌그러뜨려 글자를 세로로 깨지 않음) */
+#toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 10px; background: #4c97ff; align-items: center; }
+#app-logo { width: 32px; height: 32px; flex-shrink: 0; }
+/* 파일 도구 ↔ 장치 도구를 부드럽게 분리 (남는 공간이 있으면 조금만 벌어짐) */
+#toolbar .spacer { flex: 1 1 12px; }
+/* 이름 입력만 공간이 부족할 때 먼저 줄어들게 한다 */
+#project-name { border: none; border-radius: 4px; padding: 6px 10px; font-size: 15px; width: 150px; min-width: 90px; flex-shrink: 1; }
+/* 버튼/셀렉트는 글자 줄바꿈 금지 + 찌그러지지 않게 */
+#toolbar button, #toolbar select { padding: 6px 12px; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+/* 셀렉트가 내용에 따라 제멋대로 커지지 않게 폭을 잡아준다 */
+#example-select { width: 128px; }
+#port-select { width: 190px; text-overflow: ellipsis; }
 #btn-upload { background: #ffab19; font-weight: bold; }
 main { flex: 1; display: flex; min-height: 0; }
 #blocklyDiv { flex: 1; min-width: 0; }
@@ -15,6 +22,7 @@ main { flex: 1; display: flex; min-height: 0; }
 #side-panel nav button.active { background: #fff; font-weight: bold; }
 #code-preview { flex: 1; overflow: auto; padding: 10px; font-size: 13px; background: #fafafa; }
 #wiring-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+#wiring-container[hidden] { display: none; } /* display:flex가 hidden 기본값을 덮으므로 명시 */
 #wiring-lock-row { padding: 8px 12px; font-size: 12.5px; color: #444; background: #fff; border-bottom: 1px solid #e0e0e0; cursor: pointer; user-select: none; }
 #wiring-lock-row input { vertical-align: middle; margin-right: 4px; }
 #wiring-panel { flex: 1; overflow: auto; padding: 10px; background: #fafafa; }
@@ -24,6 +32,16 @@ main { flex: 1; display: flex; min-height: 0; }
 .wiring-legend li { margin: 3px 0; }
 .wiring-legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 .wiring-legend .wiring-note { color: #888; margin-top: 4px; }
+#serial-toggle-row { display: flex; align-items: center; gap: 4px; color: #fff; font-size: 14px; cursor: pointer; user-select: none; white-space: nowrap; flex-shrink: 0; }
+#serial-toggle-row input { vertical-align: middle; }
+#serial-panel { height: 200px; display: flex; flex-direction: column; border-top: 1px solid #ccc; }
+/* display:flex(author)가 hidden 속성의 display:none(UA 기본)을 덮으므로, 숨김을 명시한다 */
+#serial-panel[hidden] { display: none; }
+#serial-head { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #2b2b2b; color: #ddd; font-size: 13px; }
+#serial-head .spacer { flex: 1; }
+#serial-head button { padding: 3px 12px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; }
+#serial-log { flex: 1; overflow: auto; margin: 0; padding: 8px 12px; background: #1e1e1e; color: #9cffa0; font-family: 'Consolas', 'Menlo', monospace; font-size: 13px; white-space: pre-wrap; }
+#serial-log .placeholder { color: #888; }
 #status-bar { padding: 6px 12px; background: #333; color: #fff; font-size: 13px; }
 #error-dialog, #answer-dialog { border: none; border-radius: 8px; padding: 20px; max-width: 480px; }
 #answer-dialog p { margin: 10px 0; }

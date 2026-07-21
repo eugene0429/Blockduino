@@ -57,17 +57,35 @@ function registerIpc(getWindow) {
 
   ipcMain.handle('ports:list', () => arduino.listPorts());
 
+  // ── 시리얼 모니터 ──
+  function startMon(port) {
+    arduino.startMonitor(
+      port,
+      (line) => { const w = getWindow(); if (w) w.webContents.send('serial:data', line); },
+      () => { const w = getWindow(); if (w) w.webContents.send('serial:closed'); },
+    );
+  }
+  ipcMain.handle('serial:start', (_e, port) => { if (port) startMon(port); return true; });
+  ipcMain.handle('serial:stop', () => { arduino.stopMonitor(); return true; });
+
   ipcMain.handle('sketch:upload', async (_e, { code, port }) => {
     if (!port) {
       const fe = friendlyError('no-port', '');
       return { ok: false, ...fe };
     }
-    const result = await arduino.compileAndUpload(code, port, (stage) => {
-      getWindow().webContents.send('upload:stage', stage);
-    });
-    if (result.ok) return { ok: true };
-    const fe = friendlyError(result.stage, result.output);
-    return { ok: false, ...fe };
+    // 업로드하려면 포트를 독점해야 하므로 모니터를 잠시 닫고, 끝나면 재개한다.
+    const resumePort = arduino.isMonitoring() ? arduino.currentMonitorPort() : null;
+    if (resumePort) arduino.stopMonitor();
+    try {
+      const result = await arduino.compileAndUpload(code, port, (stage) => {
+        getWindow().webContents.send('upload:stage', stage);
+      });
+      if (result.ok) return { ok: true };
+      const fe = friendlyError(result.stage, result.output);
+      return { ok: false, ...fe };
+    } finally {
+      if (resumePort) startMon(resumePort);
+    }
   });
 }
 

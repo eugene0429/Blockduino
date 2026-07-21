@@ -1,5 +1,5 @@
 'use strict';
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs/promises');
@@ -38,8 +38,9 @@ function runCli(args) {
 
 // 학생용 포트 목록: 무관한 포트는 숨기고, 아두이노(호환)를 한글 라벨로 앞에 정렬.
 // USB 시리얼 칩 제조사 VID: Arduino(2341), Arduino.org(2A03), CH340(1A86),
-// FTDI(0403), CP210x(10C4) — 국내 교육용 호환보드는 대부분 CH340
-const LIKELY_VIDS = new Set(['2341', '2A03', '1A86', '0403', '10C4']);
+// FTDI(0403), CP210x(10C4) — 국내 교육용 호환보드는 대부분 CH340.
+// 0843: 네이티브 USB(CDC) 방식 호환보드 (예: FIREPHX "USB SER", /dev/cu.usbmodem*)
+const LIKELY_VIDS = new Set(['2341', '2A03', '1A86', '0403', '10C4', '0843']);
 const IGNORED_PORTS = /bluetooth|wlan-debug|debug-console/i;
 
 function parseBoardList(stdout) {
@@ -70,6 +71,43 @@ async function listPorts() {
   return r.ok ? parseBoardList(r.stdout) : [];
 }
 
+// ── 시리얼 모니터 ────────────────────────────────────
+// arduino-cli monitor로 보드 시리얼 출력을 스트리밍한다 (새 의존성 없음).
+// 시리얼 포트는 배타적이라 한 번에 하나만 열고, 업로드 전에는 반드시 닫는다.
+let monitorProc = null;
+let monitorPort = null;
+
+function startMonitor(port, onLine, onClose) {
+  stopMonitor();
+  monitorPort = port;
+  const proc = spawn(cliBin(), ['monitor', '-p', port, '-c', 'baudrate=9600', '-q'], {
+    env: cliEnv(),
+  });
+  monitorProc = proc;
+  let buf = '';
+  // setEncoding('utf8')을 걸면 Node의 StringDecoder가 청크 경계에 걸친
+  // 멀티바이트(한글 3바이트 등) 문자를 이어붙여 준다. 이걸 안 하면
+  // chunk.toString()이 반쪽 바이트를 깨진 문자()로 만든다.
+  proc.stdout.setEncoding('utf8');
+  proc.stdout.on('data', (chunk) => {
+    buf += chunk;
+    const lines = buf.split(/\r?\n/);
+    buf = lines.pop(); // 마지막 조각은 다음 청크와 합친다
+    for (const line of lines) onLine(line);
+  });
+  proc.on('error', () => { if (monitorProc === proc) { monitorProc = null; monitorPort = null; } onClose && onClose(); });
+  proc.on('close', () => { if (monitorProc === proc) { monitorProc = null; monitorPort = null; } onClose && onClose(); });
+  return proc;
+}
+
+function stopMonitor() {
+  if (monitorProc) { monitorProc.kill(); monitorProc = null; }
+  monitorPort = null;
+}
+
+function isMonitoring() { return !!monitorProc; }
+function currentMonitorPort() { return monitorPort; }
+
 async function compileAndUpload(code, port, onStage) {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'blockduino-'));
   const sketchDir = path.join(dir, 'sketch');
@@ -88,4 +126,7 @@ async function compileAndUpload(code, port, onStage) {
   }
 }
 
-module.exports = { parseBoardList, listPorts, compileAndUpload, FQBN };
+module.exports = {
+  parseBoardList, listPorts, compileAndUpload, FQBN,
+  startMonitor, stopMonitor, isMonitoring, currentMonitorPort,
+};

@@ -166,6 +166,62 @@ async function refreshPorts() {
 refreshPorts();
 setInterval(refreshPorts, 3000);
 
+// ── 시리얼 디버그: 센서값 모니터 ──────────────────────
+const serialToggle = document.getElementById('serial-toggle');
+const serialPanel = document.getElementById('serial-panel');
+const serialLog = document.getElementById('serial-log');
+const SERIAL_MAX_LINES = 500;
+
+function serialPlaceholder(text) {
+  serialLog.textContent = '';
+  const span = document.createElement('span');
+  span.className = 'placeholder';
+  span.textContent = text;
+  serialLog.appendChild(span);
+}
+
+function appendSerial(line) {
+  const ph = serialLog.querySelector('.placeholder');
+  if (ph) serialLog.textContent = ''; // 안내 문구는 첫 데이터에서 지운다
+  serialLog.appendChild(document.createTextNode(line + '\n'));
+  while (serialLog.childNodes.length > SERIAL_MAX_LINES) {
+    serialLog.removeChild(serialLog.firstChild); // 오래된 줄 버려 메모리 제한
+  }
+  serialLog.scrollTop = serialLog.scrollHeight;
+}
+
+function startSerialIfBoard() {
+  if (portSelect.value) {
+    ipcRenderer.invoke('serial:start', portSelect.value);
+    serialPlaceholder('센서값을 기다리는 중… [⬆ 업로드]를 누르면 값이 표시돼요.');
+  } else {
+    serialPlaceholder('보드를 먼저 연결해 주세요.');
+  }
+}
+
+serialToggle.addEventListener('change', () => {
+  arduinoGenerator.debugSerial = serialToggle.checked;
+  refreshCode(); // 미리보기·업로드 코드에 센서값 출력이 반영됨
+  serialPanel.hidden = !serialToggle.checked;
+  if (serialToggle.checked) startSerialIfBoard();
+  else ipcRenderer.invoke('serial:stop');
+});
+
+document.getElementById('serial-clear').addEventListener('click', () => {
+  serialLog.textContent = '';
+});
+document.getElementById('serial-close').addEventListener('click', () => {
+  serialToggle.checked = false;
+  serialToggle.dispatchEvent(new Event('change'));
+});
+
+// 디버그 중 보드(포트)를 바꾸면 모니터도 새 포트로 옮긴다
+portSelect.addEventListener('change', () => {
+  if (serialToggle.checked) startSerialIfBoard();
+});
+
+ipcRenderer.on('serial:data', (_e, line) => appendSerial(line));
+
 function setStatusClass(cls) {
   document.getElementById('status-bar').className = cls;
 }

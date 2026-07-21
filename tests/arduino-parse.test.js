@@ -31,6 +31,16 @@ describe('parseBoardList', () => {
     expect(r[0].label).toBe('아두이노 호환 보드 (COM7)');
   });
 
+  it('네이티브 USB(VID 0843) 보드도 호환 보드로 인식', () => {
+    const stdout = JSON.stringify({ detected_ports: [
+      { port: { address: '/dev/cu.usbmodemFX2348N1', protocol: 'serial',
+        properties: { vid: '0x0843', pid: '0x5740' } } },
+    ] });
+    const r = parseBoardList(stdout);
+    expect(r[0].rank).toBe(1);
+    expect(r[0].label).toBe('아두이노 호환 보드 (/dev/cu.usbmodemFX2348N1)');
+  });
+
   it('빈 출력/깨진 JSON → 빈 배열', () => {
     expect(parseBoardList('')).toEqual([]);
     expect(parseBoardList('not json')).toEqual([]);

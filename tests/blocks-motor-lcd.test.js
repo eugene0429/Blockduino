@@ -23,6 +23,13 @@ describe('서보/LCD 블록', () => {
     expect(code).toContain('Servo servo_9;');
     expect(code).toContain('servo_9.attach(9);');
     expect(code).toContain('servo_9.write(90);');
+    // 서보 지터 방지: loop 끝에 짧은 지연이 자동으로 붙는다
+    expect(code).toMatch(/delay\(20\);\s*\n}/);
+  });
+
+  it('LCD만 쓰면 서보용 loop 지연은 붙지 않는다', () => {
+    const code = loopCode({ type: 'lcd_clear' });
+    expect(code).not.toContain('delay(20);');
   });
 
   it('LCD 출력 → include/init/setCursor/print', () => {

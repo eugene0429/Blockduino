@@ -32,6 +32,7 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
     this.functions_ = new Map();
     this.setupBody_ = '';
     this.loopBody_ = '';
+    this.servoUsed_ = false; // 서보 블록이 쓰이면 loop 끝에 지터 방지 지연을 넣는다
     this.varNames_ = new Map();
     const usedNames = new Set();
     let seq = 0;
@@ -56,6 +57,22 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
       this.varNames_.set(v.getId(), name);
       this.addDeclaration(`var_${name}`, `float ${name} = 0;`);
     }
+    // 시리얼 디버그: 워크스페이스의 모든 센서 블록을 스캔해 값 출력을 준비한다.
+    // 연결 여부와 무관하게 센서를 찾으므로, 블록이 분리된 상태에서도 값이 찍힌다.
+    this.debugReads_ = [];
+    if (this.debugSerial && this.debugLabels) {
+      const seen = new Set();
+      for (const type of Object.keys(this.debugLabels)) {
+        for (const block of workspace.getBlocksByType(type, false)) {
+          if (block.isInsertionMarker && block.isInsertionMarker()) continue;
+          if (block.isEnabled && !block.isEnabled()) continue;
+          const [expr] = this.forBlock[type](block, this); // include/함수/setup 부수효과 등록
+          if (seen.has(expr)) continue;
+          seen.add(expr);
+          this.debugReads_.push({ label: this.debugLabels[type](block), expr });
+        }
+      }
+    }
   }
 
   varName(idOrModel) {
@@ -74,6 +91,20 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
   }
 
   finish(code) {
+    // 시리얼 디버그가 켜져 있으면 loop 끝에 300ms 스로틀 센서값 출력을 붙인다.
+    // (예제마다 delay가 달라 매 루프 출력 시 폭주하므로 millis로 주기를 고정)
+    if (this.debugSerial && this.debugReads_ && this.debugReads_.length) {
+      this.addSetup('serial_begin', 'Serial.begin(9600);');
+      this.addDeclaration('dbg_last', 'unsigned long _dbgLast = 0;');
+      const lines = this.debugReads_
+        .map((r) => `    Serial.print("${r.label}: "); Serial.println(${r.expr});`)
+        .join('\n');
+      this.loopBody_ += '  if (millis() - _dbgLast >= 300) {\n' +
+        `    _dbgLast = millis();\n${lines}\n  }\n`;
+    }
+    // 서보를 쓰면 loop가 초고속으로 돌 때 서보가 덜덜 떨린다(지터). loop 끝에
+    // 서보 갱신 주기(20ms)만큼 짧은 지연을 넣어 안정화한다.
+    if (this.servoUsed_) this.loopBody_ += '  delay(20);\n';
     const parts = [];
     if (this.includes_.size) parts.push([...this.includes_.values()].join('\n'));
     if (this.declarations_.size) parts.push([...this.declarations_.values()].join('\n'));

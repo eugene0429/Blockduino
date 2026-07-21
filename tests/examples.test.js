@@ -155,3 +155,67 @@ describe('예제 데모', () => {
     expect(code).toContain('tone(8, 523);');
   });
 });
+
+describe('시리얼 디버그 (센서값 자동 출력)', () => {
+  function debugCodeOf(id) {
+    const ex = EXAMPLES.find((e) => e.id === id);
+    const ws = new Blockly.Workspace();
+    Blockly.serialization.workspaces.load(ex.workspace, ws);
+    g.debugSerial = true;
+    try {
+      return g.workspaceToCode(ws);
+    } finally {
+      g.debugSerial = false;
+      ws.dispose();
+    }
+  }
+
+  it('OFF가 기본값이라 일반 생성 코드에는 Serial이 없다', () => {
+    const code = codeOf('light');
+    expect(code).not.toContain('Serial');
+  });
+
+  it('센서등 1: 조도값을 300ms 주기로 출력한다', () => {
+    const code = debugCodeOf('light');
+    expect(code).toContain('Serial.begin(9600);');
+    expect(code).toContain('if (millis() - _dbgLast >= 300) {');
+    expect(code).toContain('Serial.print("조도(A0): "); Serial.println(analogRead(A0));');
+  });
+
+  it('자동문 1: 초음파 헬퍼가 50ms 이내 재호출 시 재트리거하지 않는다', () => {
+    const code = debugCodeOf('door');
+    expect(code).toContain('Serial.print("거리(cm): "); Serial.println(readUltrasonic(7, 6));');
+    // 디버그 모드 헬퍼는 최근 값을 캐시하고 짧은 간격 재호출을 차단한다
+    expect(code).toContain('unsigned long _usLastT = 0;');
+    expect(code).toContain('if (_usLastT != 0 && millis() - _usLastT < 50) return _usLast;');
+  });
+
+  it('디버그 OFF면 초음파 헬퍼에 캐시/레이트리밋이 없다', () => {
+    const code = codeOf('door');
+    expect(code).not.toContain('_usLast');
+    expect(code).toContain('return duration * 0.0343 / 2.0;');
+  });
+
+  it('화재 경보기: 온도값을 출력한다 (DHT 선언 포함)', () => {
+    const code = debugCodeOf('fire');
+    expect(code).toContain('Serial.print("온도(℃): "); Serial.println(dht_4.readTemperature());');
+    expect(code).toContain('DHT dht_4(4, DHT11);');
+  });
+
+  it('연습 배치(센서 분리 상태)에서도 센서값이 출력된다', () => {
+    const ex = EXAMPLES.find((e) => e.id === 'light');
+    const ws = new Blockly.Workspace();
+    Blockly.serialization.workspaces.load(ex.practice, ws);
+    g.debugSerial = true;
+    let code;
+    try { code = g.workspaceToCode(ws); } finally { g.debugSerial = false; ws.dispose(); }
+    // 연습 배치는 조도 센서 핀이 정답(A0)과 다르지만, 어떤 핀이든 출력돼야 한다
+    expect(code).toMatch(/Serial\.println\(analogRead\(A\d\)\);/);
+  });
+
+  it('모든 예제가 디버그 모드에서도 크래시 없이 생성된다', () => {
+    for (const ex of EXAMPLES) {
+      expect(() => debugCodeOf(ex.id), ex.id).not.toThrow();
+    }
+  });
+});

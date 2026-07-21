@@ -14,6 +14,9 @@
     <select id="example-select"><option value="">예제 열기…</option></select>
     <button id="btn-answer" disabled>정답 보기</button>
     <span class="spacer"></span>
+    <label id="serial-toggle-row" title="센서값이 잘 들어오는지 확인해요">
+      <input type="checkbox" id="serial-toggle" /> 🔍 센서값 보기
+    </label>
     <select id="port-select"><option value="">보드를 연결하세요</option></select>
     <button id="btn-upload">⬆ 업로드</button>
   </header>
@@ -34,6 +37,15 @@
       </div>
     </aside>
   </main>
+  <section id="serial-panel" hidden>
+    <div id="serial-head">
+      <span>🔍 시리얼 모니터 — 센서값</span>
+      <span class="spacer"></span>
+      <button id="serial-clear">지우기</button>
+      <button id="serial-close">닫기</button>
+    </div>
+    <pre id="serial-log"></pre>
+  </section>
   <footer id="status-bar">준비됨</footer>
   <dialog id="answer-dialog">
     <h3>선생님 확인</h3>

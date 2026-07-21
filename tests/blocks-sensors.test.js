@@ -32,6 +32,8 @@ describe('센서 블록', () => {
     expect(code).toContain('#include <DHT.h>');
     expect(code).toContain('DHT dht_4(4, DHT11);');
     expect(code).toContain('dht_4.begin();');
+    // 센서 안정화 대기 — 첫 읽기가 nan으로 실패하지 않도록
+    expect(code).toContain('delay(1500);');
     expect(code).toContain('x = dht_4.readTemperature();');
   });
 
