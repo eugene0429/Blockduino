@@ -106,3 +106,7 @@ scripts/
   prepare-arduino.mjs  downloads the Arduino toolchain into vendor/
 tests/               Vitest unit tests (code generation, examples, i18n, ports)
 ```
+
+## License
+
+[MIT](LICENSE) © 2026 Eugene

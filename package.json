@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Block-based Arduino coding app for elementary and middle school students (English / Korean)",
   "repository": "github:eugene0429/Blockduino",
+  "license": "MIT",
   "keywords": ["arduino", "blockly", "education", "electron", "block-coding"],
   "main": "src/main/main.js",
   "scripts": {
