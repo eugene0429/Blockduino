@@ -1,7 +1,9 @@
 {
   "name": "blockduino",
   "version": "0.1.0",
-  "description": "초중등 학생용 블록 코딩 아두이노 프로그램",
+  "description": "Block-based Arduino coding app for elementary and middle school students (English / Korean)",
+  "repository": "github:eugene0429/Blockduino",
+  "keywords": ["arduino", "blockly", "education", "electron", "block-coding"],
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
@@ -28,7 +30,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerLanguages": ["ko_KR"]
+      "installerLanguages": ["en_US", "ko_KR"]
     }
   }
 }

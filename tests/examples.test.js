@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import * as Blockly from 'blockly';
 import { arduinoGenerator as g } from '../src/shared/arduino-generator.js';
 import '../src/shared/blocks/index.js';
-import { EXAMPLES } from '../src/shared/examples.js';
+import { EXAMPLES, localizeWorkspace } from '../src/shared/examples.js';
+import { setLang } from '../src/shared/i18n.js';
 
 function codeOf(id) {
   const ex = EXAMPLES.find((e) => e.id === id);
@@ -29,15 +30,15 @@ describe('예제 데모', () => {
     expect(code).toContain('digitalWrite(13, HIGH);');
     expect(code).toContain('digitalWrite(13, LOW);');
     expect(code).toContain('pinMode(13, OUTPUT);');
-    expect(EXAMPLES.find((e) => e.id === 'light').title).toBe('센서등 1');
+    expect(EXAMPLES.find((e) => e.id === 'light').title).toBe('Night Light 1');
   });
 
   it('센서등 2: 밝기 변수 + 3단계 신호등 (빨강/노랑/초록)', () => {
     const code = codeOf('light2');
-    expect(code).toContain('float var1 = 0;');            // 변수 '밝기'
-    expect(code).toContain('var1 = analogRead(A0);');
-    expect(code).toContain('if (var1 < 200) {');           // 어두움 → 빨강
-    expect(code).toContain('else if (var1 < 600) {');      // 중간 → 노랑
+    expect(code).toContain('float brightness = 0;');            // 변수 '밝기'
+    expect(code).toContain('brightness = analogRead(A0);');
+    expect(code).toContain('if (brightness < 200) {');           // 어두움 → 빨강
+    expect(code).toContain('else if (brightness < 600) {');      // 중간 → 노랑
     expect(code).toContain('digitalWrite(11, HIGH);');
     expect(code).toContain('digitalWrite(12, HIGH);');
     expect(code).toContain('digitalWrite(13, HIGH);');
@@ -58,9 +59,9 @@ describe('예제 데모', () => {
 
   it('자동문 2: 거리 변수 + 3단계 문 열기 (기존 부품만 사용)', () => {
     const code = codeOf('door2');
-    expect(code).toContain('var1 = readUltrasonic(7, 6);');   // 변수 '거리'
-    expect(code).toContain('if (var1 < 5) {');                 // 아주 가까움 → 활짝
-    expect(code).toContain('else if (var1 < 15) {');           // 가까움 → 반만
+    expect(code).toContain('distance = readUltrasonic(7, 6);');   // 변수 '거리'
+    expect(code).toContain('if (distance < 5) {');                 // 아주 가까움 → 활짝
+    expect(code).toContain('else if (distance < 15) {');           // 가까움 → 반만
     expect(code).toContain('servo_9.write(180);');
     expect(code).toContain('servo_9.write(90);');
     expect(code).toContain('servo_9.write(0);');
@@ -68,11 +69,11 @@ describe('예제 데모', () => {
 
   it('화재 경보기 2: 온도 변수 + 단계별 경보음 (기존 부품만 사용)', () => {
     const code = codeOf('fire2');
-    expect(code).toContain('var1 = dht_4.readTemperature();'); // 변수 '온도'
-    expect(code).toContain('if (var1 > 40) {');                 // 위험 → 빠른 경보 3번
+    expect(code).toContain('temperature = dht_4.readTemperature();'); // 변수 '온도'
+    expect(code).toContain('if (temperature > 40) {');                 // 위험 → 빠른 경보 3번
     expect(code).toContain('for (int i = 0; i < 3; i++) {');
     expect(code).toContain('tone(8, 523);');
-    expect(code).toContain('else if (var1 > 30) {');            // 주의 → 낮은 음
+    expect(code).toContain('else if (temperature > 30) {');            // 주의 → 낮은 음
     expect(code).toContain('tone(8, 262);');
     expect(code).toContain('noTone(8);');                       // 평상시 → 조용
   });
@@ -179,12 +180,12 @@ describe('시리얼 디버그 (센서값 자동 출력)', () => {
     const code = debugCodeOf('light');
     expect(code).toContain('Serial.begin(9600);');
     expect(code).toContain('if (millis() - _dbgLast >= 300) {');
-    expect(code).toContain('Serial.print("조도(A0): "); Serial.println(analogRead(A0));');
+    expect(code).toContain('Serial.print("Light(A0): "); Serial.println(analogRead(A0));');
   });
 
   it('자동문 1: 초음파 헬퍼가 50ms 이내 재호출 시 재트리거하지 않는다', () => {
     const code = debugCodeOf('door');
-    expect(code).toContain('Serial.print("거리(cm): "); Serial.println(readUltrasonic(7, 6));');
+    expect(code).toContain('Serial.print("Distance(cm): "); Serial.println(readUltrasonic(7, 6));');
     // 디버그 모드 헬퍼는 최근 값을 캐시하고 짧은 간격 재호출을 차단한다
     expect(code).toContain('unsigned long _usLastT = 0;');
     expect(code).toContain('if (_usLastT != 0 && millis() - _usLastT < 50) return _usLast;');
@@ -198,8 +199,18 @@ describe('시리얼 디버그 (센서값 자동 출력)', () => {
 
   it('화재 경보기: 온도값을 출력한다 (DHT 선언 포함)', () => {
     const code = debugCodeOf('fire');
-    expect(code).toContain('Serial.print("온도(℃): "); Serial.println(dht_4.readTemperature());');
+    expect(code).toContain('Serial.print("Temp(C): "); Serial.println(dht_4.readTemperature());');
     expect(code).toContain('DHT dht_4(4, DHT11);');
+  });
+
+  it('한국어 설정이면 센서값 라벨도 한글', () => {
+    setLang('ko');
+    try {
+      expect(debugCodeOf('light')).toContain('Serial.print("조도(A0): ");');
+      expect(debugCodeOf('fire')).toContain('Serial.print("온도(℃): ");');
+    } finally {
+      setLang('en');
+    }
   });
 
   it('연습 배치(센서 분리 상태)에서도 센서값이 출력된다', () => {
@@ -217,5 +228,27 @@ describe('시리얼 디버그 (센서값 자동 출력)', () => {
     for (const ex of EXAMPLES) {
       expect(() => debugCodeOf(ex.id), ex.id).not.toThrow();
     }
+  });
+});
+
+describe('예제 다국어', () => {
+  it('제목/설명은 현재 언어를 따른다', () => {
+    const ex = EXAMPLES.find((e) => e.id === 'light');
+    expect(ex.title).toBe('Night Light 1');
+    setLang('ko');
+    try {
+      expect(ex.title).toBe('센서등 1');
+      expect(ex.description).toBe('어두워지면 LED가 켜져요');
+    } finally {
+      setLang('en');
+    }
+  });
+
+  it('localizeWorkspace는 예제 변수 이름을 번역하고 원본은 건드리지 않는다', () => {
+    const ex = EXAMPLES.find((e) => e.id === 'light2');
+    const ko = localizeWorkspace(ex.practice, 'ko');
+    expect(ko.variables[0].name).toBe('밝기');
+    expect(localizeWorkspace(ex.workspace, 'en').variables[0].name).toBe('brightness');
+    expect(ex.practice.variables[0].name).toBe('brightness');
   });
 });

@@ -5,36 +5,36 @@ const { PWM_PINS } = require('../pins.js');
 
 Blockly.defineBlocksWithJsonArray([
   { type: 'motor_servo',
-    message0: '서보모터 %1 번 핀을 %2 도로 회전 (0~180)',
+    message0: '%{BKY_BD_SERVO}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: PWM_PINS },
       { type: 'input_value', name: 'ANGLE', check: 'Number' },
     ],
     previousStatement: null, nextStatement: null, colour: 290 },
   { type: 'lcd_print',
-    message0: 'LCD %1 번째 줄에 %2 표시',
+    message0: '%{BKY_BD_LCD_PRINT}',
     args0: [
       { type: 'field_dropdown', name: 'ROW', options: [['1', '0'], ['2', '1']] },
       { type: 'input_value', name: 'TEXT' },
     ],
     previousStatement: null, nextStatement: null, colour: 290,
-    tooltip: 'I2C LCD(주소 0x27, 16x2)에 글자를 보여줘요.' },
+    tooltip: '%{BKY_BD_LCD_PRINT_TOOLTIP}' },
   { type: 'lcd_clear',
-    message0: 'LCD 화면 지우기',
+    message0: '%{BKY_BD_LCD_CLEAR}',
     previousStatement: null, nextStatement: null, colour: 290 },
   { type: 'motor_servo_effect',
-    message0: '서보모터 %1 번 핀 %2',
+    message0: '%{BKY_BD_SERVO_EFFECT}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: PWM_PINS },
       { type: 'field_dropdown', name: 'EFFECT', options: [
-        ['왔다갔다 흔들기', 'SWEEP'],
-        ['인사하기 (까딱까딱)', 'NOD'],
+        ['%{BKY_BD_SERVO_EFFECT_SWEEP}', 'SWEEP'],
+        ['%{BKY_BD_SERVO_EFFECT_NOD}', 'NOD'],
       ] },
     ],
     previousStatement: null, nextStatement: null, colour: 290,
-    tooltip: '서보모터로 재미있는 움직임을 만들어요.' },
+    tooltip: '%{BKY_BD_SERVO_EFFECT_TOOLTIP}' },
   { type: 'lcd_blink',
-    message0: 'LCD 화면 3번 깜빡이기',
+    message0: '%{BKY_BD_LCD_BLINK}',
     previousStatement: null, nextStatement: null, colour: 290 },
 ]);
 

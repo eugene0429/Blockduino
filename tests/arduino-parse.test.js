@@ -1,9 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { parseBoardList } from '../src/main/arduino.js';
 import { friendlyError } from '../src/main/messages.js';
+import { setLang } from '../src/shared/i18n.js';
+
+afterEach(() => setLang('en'));
 
 describe('parseBoardList', () => {
-  it('한글 라벨 + 아두이노 우선 정렬, 무관한 포트는 제외', () => {
+  it('친절한 라벨 + 아두이노 우선 정렬, 무관한 포트는 제외', () => {
     const stdout = JSON.stringify({ detected_ports: [
       { port: { address: 'COM5', protocol: 'serial', properties: { vid: '0x05AC' } } }, // 기타 장치
       { port: { address: 'COM4', protocol: 'serial',
@@ -15,9 +18,22 @@ describe('parseBoardList', () => {
       { port: { address: '192.168.0.2', protocol: 'network' } },                        // 숨김
     ] });
     expect(parseBoardList(stdout)).toEqual([
-      { port: 'COM3', label: '아두이노 보드 (COM3)', isUno: true, rank: 0 },
-      { port: 'COM4', label: '아두이노 호환 보드 (COM4)', isUno: false, rank: 1 },
-      { port: 'COM5', label: '기타 포트 (COM5)', isUno: false, rank: 2 },
+      { port: 'COM3', label: 'Arduino board (COM3)', isUno: true, rank: 0 },
+      { port: 'COM4', label: 'Arduino-compatible board (COM4)', isUno: false, rank: 1 },
+      { port: 'COM5', label: 'Other port (COM5)', isUno: false, rank: 2 },
+    ]);
+  });
+
+  it('한국어 설정이면 한글 라벨', () => {
+    setLang('ko');
+    const stdout = JSON.stringify({ detected_ports: [
+      { port: { address: 'COM4', protocol: 'serial', properties: { vid: '0x1A86' } } },
+      { port: { address: 'COM3', protocol: 'serial' },
+        matching_boards: [{ name: 'Arduino Uno', fqbn: 'arduino:avr:uno' }] },
+      { port: { address: 'COM5', protocol: 'serial', properties: { vid: '0x05AC' } } },
+    ] });
+    expect(parseBoardList(stdout).map((p) => p.label)).toEqual([
+      '아두이노 보드 (COM3)', '아두이노 호환 보드 (COM4)', '기타 포트 (COM5)',
     ]);
   });
 
@@ -28,7 +44,7 @@ describe('parseBoardList', () => {
     ] });
     const r = parseBoardList(stdout);
     expect(r.map((p) => p.rank)).toEqual([1, 1]);
-    expect(r[0].label).toBe('아두이노 호환 보드 (COM7)');
+    expect(r[0].label).toBe('Arduino-compatible board (COM7)');
   });
 
   it('네이티브 USB(VID 0843) 보드도 호환 보드로 인식', () => {
@@ -38,7 +54,7 @@ describe('parseBoardList', () => {
     ] });
     const r = parseBoardList(stdout);
     expect(r[0].rank).toBe(1);
-    expect(r[0].label).toBe('아두이노 호환 보드 (/dev/cu.usbmodemFX2348N1)');
+    expect(r[0].label).toBe('Arduino-compatible board (/dev/cu.usbmodemFX2348N1)');
   });
 
   it('빈 출력/깨진 JSON → 빈 배열', () => {
@@ -50,20 +66,26 @@ describe('parseBoardList', () => {
 describe('friendlyError', () => {
   it('포트 없음', () => {
     expect(friendlyError('no-port', '').message)
-      .toBe('아두이노가 연결되어 있는지 확인해 주세요');
+      .toBe('Check that your Arduino is connected');
   });
   it('업로드 통신 실패 (avrdude stk500)', () => {
     const r = friendlyError('upload', 'avrdude: stk500_recv(): programmer is not responding');
-    expect(r.message).toBe('USB 케이블을 다시 연결하고 시도해 주세요');
+    expect(r.message).toBe('Reconnect the USB cable and try again');
     expect(r.detail).toContain('stk500_recv');
   });
   it('포트 접근 거부', () => {
     const r = friendlyError('upload', "can't open device \"COM3\": Access is denied");
-    expect(r.message).toBe('다른 프로그램이 보드를 사용 중이에요. 시리얼 모니터 등을 닫고 다시 시도해 주세요');
+    expect(r.message).toBe('Another program is using the board. Close the serial monitor or other programs and try again');
   });
   it('컴파일 실패 → 원문 로그를 detail로', () => {
     const r = friendlyError('compile', 'error: expected ; before }');
-    expect(r.message).toBe('코드를 만드는 중 문제가 생겼어요. [자세히 보기]를 눌러 확인해 주세요');
+    expect(r.message).toBe('Something went wrong while building the code. Click [Show details] to check');
     expect(r.detail).toContain('expected ;');
+  });
+  it('한국어 설정이면 한글 메시지', () => {
+    setLang('ko');
+    expect(friendlyError('no-port', '').message).toBe('아두이노가 연결되어 있는지 확인해 주세요');
+    expect(friendlyError('compile', 'x').message)
+      .toBe('코드를 만드는 중 문제가 생겼어요. [자세히 보기]를 눌러 확인해 주세요');
   });
 });

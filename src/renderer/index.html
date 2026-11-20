@@ -1,37 +1,39 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Blockduino</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Text is filled in from src/shared/locales/*.js via data-i18n* attributes (see renderer.js). -->
   <header id="toolbar">
     <img id="app-logo" src="logo.svg" alt="Blockduino" title="Blockduino" />
-    <input id="project-name" value="새 프로젝트" />
-    <button id="btn-open">열기</button>
-    <button id="btn-save">저장</button>
-    <select id="example-select"><option value="">예제 열기…</option></select>
-    <button id="btn-answer" disabled>정답 보기</button>
+    <input id="project-name" value="New Project" />
+    <button id="btn-open" data-i18n="toolbar.open">Open</button>
+    <button id="btn-save" data-i18n="toolbar.save">Save</button>
+    <select id="example-select"><option value="" data-i18n="toolbar.examples">Open example…</option></select>
+    <button id="btn-answer" data-i18n="toolbar.answer" disabled>Show answer</button>
     <span class="spacer"></span>
-    <label id="serial-toggle-row" title="센서값이 잘 들어오는지 확인해요">
-      <input type="checkbox" id="serial-toggle" /> 🔍 센서값 보기
+    <label id="serial-toggle-row" data-i18n-title="toolbar.serialTitle" title="Check that sensor values are coming in">
+      <input type="checkbox" id="serial-toggle" /> <span data-i18n="toolbar.serial">🔍 Sensor values</span>
     </label>
-    <select id="port-select"><option value="">보드를 연결하세요</option></select>
-    <button id="btn-upload">⬆ 업로드</button>
+    <select id="port-select"><option value="">Connect a board</option></select>
+    <button id="btn-upload" data-i18n="toolbar.upload">⬆ Upload</button>
+    <select id="lang-select" data-i18n-title="toolbar.language" title="Language"></select>
   </header>
   <main>
     <div id="blocklyDiv"></div>
     <aside id="side-panel">
       <nav>
-        <button id="tab-code" class="active">코드</button>
-        <button id="tab-wiring">배선</button>
+        <button id="tab-code" class="active" data-i18n="tab.code">Code</button>
+        <button id="tab-wiring" data-i18n="tab.wiring">Wiring</button>
       </nav>
       <pre id="code-preview"></pre>
       <div id="wiring-container" hidden>
         <label id="wiring-lock-row">
           <input type="checkbox" id="wiring-lock" disabled />
-          배선 고정 — 블록과 상관없이 예제의 정답 배선을 보여줘요
+          <span data-i18n="wiring.lock">Lock wiring</span>
         </label>
         <div id="wiring-panel"></div>
       </div>
@@ -39,32 +41,32 @@
   </main>
   <section id="serial-panel" hidden>
     <div id="serial-head">
-      <span>🔍 시리얼 모니터 — 센서값</span>
+      <span data-i18n="serial.title">🔍 Serial monitor — sensor values</span>
       <span class="spacer"></span>
-      <button id="serial-clear">지우기</button>
-      <button id="serial-close">닫기</button>
+      <button id="serial-clear" data-i18n="serial.clear">Clear</button>
+      <button id="serial-close" data-i18n="serial.close">Close</button>
     </div>
     <pre id="serial-log"></pre>
   </section>
-  <footer id="status-bar">준비됨</footer>
+  <footer id="status-bar" data-i18n="status.ready">Ready</footer>
   <dialog id="answer-dialog">
-    <h3>선생님 확인</h3>
-    <p>정답 블록을 보려면 관리자 비밀번호를 입력하세요.</p>
-    <input id="answer-password" type="password" placeholder="비밀번호" />
-    <p id="answer-error" hidden>비밀번호가 맞지 않아요.</p>
+    <h3 data-i18n="answer.title">Teacher check</h3>
+    <p data-i18n="answer.prompt">Enter the admin password to see the answer blocks.</p>
+    <input id="answer-password" type="password" data-i18n-placeholder="answer.placeholder" placeholder="Password" />
+    <p id="answer-error" data-i18n="answer.wrong" hidden>Wrong password.</p>
     <div class="dialog-actions">
-      <button id="answer-cancel">취소</button>
-      <button id="answer-ok">확인</button>
+      <button id="answer-cancel" data-i18n="dialog.cancel">Cancel</button>
+      <button id="answer-ok" data-i18n="dialog.ok">OK</button>
     </div>
   </dialog>
   <dialog id="error-dialog">
     <h3 id="error-message"></h3>
     <p id="ch340-hint" hidden>
-      포트가 보이지 않으면 CH340 드라이버가 필요할 수 있어요.<br />
-      선생님과 함께 "CH340 드라이버"를 검색해 설치한 뒤 다시 연결해 보세요.
+      <span data-i18n="error.ch340.line1"></span><br />
+      <span data-i18n="error.ch340.line2"></span>
     </p>
-    <details><summary>자세히 보기</summary><pre id="error-detail"></pre></details>
-    <button id="error-close">닫기</button>
+    <details><summary data-i18n="error.details">Show details</summary><pre id="error-detail"></pre></details>
+    <button id="error-close" data-i18n="dialog.close">Close</button>
   </dialog>
   <script src="renderer.js"></script>
 </body>

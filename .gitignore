@@ -1,7 +1,23 @@
+# Dependencies & build output
 node_modules/
 dist/
+coverage/
+
+# Arduino toolchain (downloaded by `npm run prepare-arduino`)
 vendor/
+
+# Logs & env
 *.log
-.claude/settings.local.json
-.superpowers/
+.env
+.env.*
+
+# OS / editor
 .DS_Store
+.vscode/
+.idea/
+
+# AI assistant & internal working notes (not part of the release)
+.claude/
+.superpowers/
+docs/superpowers/
+docs/배선그림/

@@ -5,26 +5,26 @@ const { arduinoGenerator: g, Order } = require('../arduino-generator.js');
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'basic_setup',
-    message0: '시작하면 %1 %2',
+    message0: '%{BKY_BD_SETUP}',
     args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'BODY' }],
     colour: 120,
-    tooltip: '전원이 켜지거나 리셋될 때 한 번만 실행돼요.',
+    tooltip: '%{BKY_BD_SETUP_TOOLTIP}',
   },
   {
     type: 'basic_loop',
-    message0: '계속 반복하기 %1 %2',
+    message0: '%{BKY_BD_LOOP}',
     args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'BODY' }],
     colour: 120,
-    tooltip: '전원이 켜져 있는 동안 계속 반복 실행돼요.',
+    tooltip: '%{BKY_BD_LOOP_TOOLTIP}',
   },
   {
     type: 'basic_delay',
-    message0: '%1 초 기다리기',
+    message0: '%{BKY_BD_DELAY}',
     args0: [{ type: 'input_value', name: 'SECONDS', check: 'Number' }],
     previousStatement: null,
     nextStatement: null,
     colour: 120,
-    tooltip: '정해진 시간만큼 멈춰요.',
+    tooltip: '%{BKY_BD_DELAY_TOOLTIP}',
   },
 ]);
 

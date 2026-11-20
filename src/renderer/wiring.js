@@ -1,4 +1,5 @@
 'use strict';
+const { t } = require('../shared/i18n.js');
 
 // 부품별 배선 안내: 우노 보드 + 브레드보드 + 소자 모양을 SVG로 직접 그려
 // 실제 배선 모습에 가깝게 보여준다. 블록에서 고른 핀 번호가 그대로 반영된다.
@@ -24,25 +25,25 @@ const COLOR = {
 // ── 배선 정보 (범례 텍스트) + 장면(scene) ─────────────────────────
 const WIRING = {
   // LED 계열은 renderWiringPanel에서 핀을 모아 카드 1장(ledsScene)으로 합쳐 그린다
-  io_led: { title: 'LED', ledFamily: true },
+  io_led: { titleKey: 'wiring.title.led', ledFamily: true },
   io_button: {
-    title: '버튼',
+    titleKey: 'wiring.title.button',
     pins: (b) => [
-      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: '버튼 한쪽 다리', color: COLOR.sig1 },
-      { boardPin: 'GND', partPin: '반대쪽 다리', color: COLOR.gnd },
+      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: t('wiring.button.leg1'), color: COLOR.sig1 },
+      { boardPin: 'GND', partPin: t('wiring.button.leg2'), color: COLOR.gnd },
     ],
     scene: (svg, b) => buttonScene(svg, b.getFieldValue('PIN')),
   },
   io_buzzer_tone: {
-    title: '부저',
+    titleKey: 'wiring.title.buzzer',
     pins: (b) => [
-      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: '+ (긴 다리)', color: COLOR.sig1 },
-      { boardPin: 'GND', partPin: '− (짧은 다리)', color: COLOR.gnd },
+      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: t('wiring.buzzer.plus'), color: COLOR.sig1 },
+      { boardPin: 'GND', partPin: t('wiring.buzzer.minus'), color: COLOR.gnd },
     ],
     scene: (svg, b) => buzzerScene(svg, b.getFieldValue('PIN')),
   },
   sensor_ultrasonic: {
-    title: '초음파 센서 (HC-SR04)',
+    titleKey: 'wiring.title.ultrasonic',
     pins: (b) => [
       { boardPin: '5V', partPin: 'VCC', color: COLOR.power },
       { boardPin: `D${b.getFieldValue('TRIG')}`, partPin: 'Trig', color: COLOR.sig1 },
@@ -52,35 +53,35 @@ const WIRING = {
     scene: (svg, b) => ultrasonicScene(svg, b.getFieldValue('TRIG'), b.getFieldValue('ECHO')),
   },
   sensor_dht: {
-    title: '온습도 센서 (DHT11)',
+    titleKey: 'wiring.title.dht',
     // 3핀 모듈: 위에서 봤을 때 왼쪽부터 VCC · DATA · GND
     pins: (b) => [
-      { boardPin: '5V', partPin: 'VCC (왼쪽)', color: COLOR.power },
-      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: 'DATA (가운데)', color: COLOR.sig1 },
-      { boardPin: 'GND', partPin: 'GND (오른쪽)', color: COLOR.gnd },
+      { boardPin: '5V', partPin: t('wiring.dht.vcc'), color: COLOR.power },
+      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: t('wiring.dht.data'), color: COLOR.sig1 },
+      { boardPin: 'GND', partPin: t('wiring.dht.gnd'), color: COLOR.gnd },
     ],
     scene: (svg, b) => dhtScene(svg, b.getFieldValue('PIN')),
   },
   sensor_cds: {
-    title: '조도 센서 (CDS)',
+    titleKey: 'wiring.title.cds',
     pins: (b) => [
-      { boardPin: '5V', partPin: 'CDS 한쪽 다리', color: COLOR.power },
-      { boardPin: b.getFieldValue('PIN'), partPin: 'CDS 반대쪽 다리 (저항 10kΩ와 같은 줄)', color: COLOR.sig1 },
-      { boardPin: 'GND', partPin: '저항 10kΩ 반대쪽', color: COLOR.gnd },
+      { boardPin: '5V', partPin: t('wiring.cds.leg1'), color: COLOR.power },
+      { boardPin: b.getFieldValue('PIN'), partPin: t('wiring.cds.leg2'), color: COLOR.sig1 },
+      { boardPin: 'GND', partPin: t('wiring.cds.resistor'), color: COLOR.gnd },
     ],
     scene: (svg, b) => cdsScene(svg, b.getFieldValue('PIN')),
   },
   motor_servo: {
-    title: '서보모터 (SG90)',
+    titleKey: 'wiring.title.servo',
     pins: (b) => [
-      { boardPin: 'GND', partPin: '갈색 선', color: COLOR.brown },
-      { boardPin: '5V', partPin: '빨간 선', color: COLOR.power },
-      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: '주황(신호) 선', color: COLOR.sig1 },
+      { boardPin: 'GND', partPin: t('wiring.servo.brown'), color: COLOR.brown },
+      { boardPin: '5V', partPin: t('wiring.servo.red'), color: COLOR.power },
+      { boardPin: `D${b.getFieldValue('PIN')}`, partPin: t('wiring.servo.orange'), color: COLOR.sig1 },
     ],
     scene: (svg, b) => servoScene(svg, b.getFieldValue('PIN')),
   },
   lcd_print: {
-    title: 'LCD (I2C 16x2)',
+    titleKey: 'wiring.title.lcd',
     pins: () => [
       { boardPin: 'GND', partPin: 'GND', color: COLOR.gnd },
       { boardPin: '5V', partPin: 'VCC', color: COLOR.power },
@@ -206,9 +207,9 @@ function partLabel(svg, x, y, text) {
 // ── 부품 장면들 (브레드보드: 선은 위쪽 줄, 소자는 보드 아래) ──────
 // LED 색상 팔레트: 여러 개일 때 순서대로 빨강 → 노랑 → 초록
 const LED_COLORS = [
-  ['빨강', '#ff5252', '#c62828'],
-  ['노랑', '#ffd600', '#f9a825'],
-  ['초록', '#4caf50', '#2e7d32'],
+  ['wiring.led.red', '#ff5252', '#c62828'],
+  ['wiring.led.yellow', '#ffd600', '#f9a825'],
+  ['wiring.led.green', '#4caf50', '#2e7d32'],
 ];
 const LED_WIRE_COLORS = [COLOR.sig1, COLOR.sig2, COLOR.sig3];
 
@@ -224,15 +225,15 @@ function ledsScene(svg, pins) {
     drawWire(svg, uno['GND'], { x: holeX(b + 4), y: holeY(0) }, COLOR.gnd);
   });
   bases.forEach((b, i) => {
-    drawResistor(svg, b, b + 2, n > 1 ? '220Ω' : '저항 220Ω');
+    drawResistor(svg, b, b + 2, n > 1 ? '220Ω' : t('wiring.resistor220'));
     drawLeg(svg, b + 2, 236);   // 긴 다리(+)
     drawLeg(svg, b + 4, 240);   // 짧은 다리(−)
     const cx = (holeX(b + 2) + holeX(b + 4)) / 2;
-    const [name, fill, stroke] = n > 1 ? LED_COLORS[i] : ['LED', '#ff5252', '#c62828'];
+    const [colorKey, fill, stroke] = n > 1 ? LED_COLORS[i] : [null, '#ff5252', '#c62828'];
     svg.appendChild(svgEl('circle', { cx, cy: 248, r: 11, fill, stroke }));
     haloText(svg, { x: holeX(b + 2) - 9, y: 216, 'font-size': 9, fill: '#c62828', 'font-weight': 'bold' }, '+');
     haloText(svg, { x: holeX(b + 4) + 4, y: 216, 'font-size': 9, fill: '#555', 'font-weight': 'bold' }, '−');
-    partLabel(svg, cx, 274, n > 1 ? `${name} LED` : 'LED');
+    partLabel(svg, cx, 274, colorKey ? t('wiring.led.named', { color: t(colorKey) }) : 'LED');
   });
 }
 
@@ -241,7 +242,7 @@ function renderLedsCard(pins) {
   const card = document.createElement('div');
   card.className = 'wiring-card';
   const title = document.createElement('h4');
-  title.textContent = pins.length > 1 ? `LED ${pins.length}개` : 'LED';
+  title.textContent = pins.length > 1 ? t('wiring.title.leds', { n: pins.length }) : t('wiring.title.led');
   card.appendChild(title);
 
   const svg = svgEl('svg', { viewBox: '0 0 360 282', width: '100%' });
@@ -252,11 +253,13 @@ function renderLedsCard(pins) {
   legend.className = 'wiring-legend';
   const entries = pins.map((p, i) => ({
     boardPin: `D${p}`,
-    partPin: `저항 220Ω → ${pins.length > 1 ? LED_COLORS[i][0] + ' ' : ''}LED 긴 다리(+)`,
+    partPin: t('wiring.led.toLongLeg', {
+      led: pins.length > 1 ? t('wiring.led.named', { color: t(LED_COLORS[i][0]) }) : 'LED',
+    }),
     color: LED_WIRE_COLORS[i],
   }));
   entries.push({ boardPin: 'GND',
-    partPin: pins.length > 1 ? '모든 LED 짧은 다리(−)' : 'LED 짧은 다리(−)',
+    partPin: t(pins.length > 1 ? 'wiring.led.gndAll' : 'wiring.led.gndOne'),
     color: COLOR.gnd });
   for (const p of entries) {
     const li = document.createElement('li');
@@ -283,7 +286,7 @@ function buttonScene(svg, pin) {
   svg.appendChild(svgEl('rect', { x: holeX(8) - 8, y: 220, width: holeX(10) - holeX(8) + 16,
     height: 26, rx: 4, fill: '#455a64' }));
   svg.appendChild(svgEl('circle', { cx, cy: 233, r: 8, fill: '#cfd8dc', stroke: '#90a4ae' }));
-  partLabel(svg, cx, 260, '버튼');
+  partLabel(svg, cx, 260, t('wiring.part.button'));
 }
 
 function buzzerScene(svg, pin) {
@@ -301,7 +304,7 @@ function buzzerScene(svg, pin) {
   svg.appendChild(svgEl('circle', { cx, cy: 202, r: 3.5, fill: '#fafafa' }));
   haloText(svg, { x: xs[0] - 9, y: 180, 'font-size': 9, fill: '#c62828', 'font-weight': 'bold' }, '+');
   haloText(svg, { x: xs[1] + 4, y: 180, 'font-size': 9, fill: '#555', 'font-weight': 'bold' }, '−');
-  partLabel(svg, cx, 240, '부저 (점퍼선으로 직접 연결)');
+  partLabel(svg, cx, 240, t('wiring.part.buzzer'));
 }
 
 function cdsScene(svg, analogPin) {
@@ -319,9 +322,9 @@ function cdsScene(svg, analogPin) {
   svg.appendChild(svgEl('path', {
     d: `M ${cx - 10} 232 l 4 4 l 4 -6 l 4 6 l 4 -6 l 4 4`,
     fill: 'none', stroke: '#a33', 'stroke-width': 1.6 }));
-  partLabel(svg, cx, 262, '조도 센서');
+  partLabel(svg, cx, 262, t('wiring.part.cds'));
   // 분압 저항 10kΩ: CDS 오른쪽 다리(10번 줄) ↔ 14번 줄
-  drawResistor(svg, 10, 14, '저항 10kΩ');
+  drawResistor(svg, 10, 14, t('wiring.resistor10k'));
 }
 
 // 모듈형 부품은 핀 헤더를 우노 쪽(위)으로 돌려서, 점퍼선이 핀에 바로 꽂히는
@@ -359,7 +362,7 @@ function ultrasonicScene(svg, trig, echo) {
   }
   svg.appendChild(svgEl('text', { x: (xL + xR) / 2, y: top + 40, 'text-anchor': 'middle', 'font-size': 8,
     fill: '#fff', 'font-family': 'sans-serif' }, 'HC-SR04'));
-  partLabel(svg, (xL + xR) / 2, top + 70, '초음파 센서 (점퍼선으로 직접 연결)');
+  partLabel(svg, (xL + xR) / 2, top + 70, t('wiring.part.ultrasonic'));
 }
 
 function dhtScene(svg, pin) {
@@ -396,7 +399,7 @@ function dhtScene(svg, pin) {
         fill: '#1565c0' }));
     }
   }
-  partLabel(svg, (xL + xR) / 2, top + 66, '온습도 DHT11 (점퍼선으로 직접 연결)');
+  partLabel(svg, (xL + xR) / 2, top + 66, t('wiring.part.dht'));
 }
 
 // ── 모듈 직접 연결 장면 (브레드보드 불필요) ───────────────────────
@@ -422,7 +425,7 @@ function servoScene(svg, pin) {
   svg.appendChild(svgEl('rect', { x: 240, y: 168, width: 12, height: 10, fill: '#3949ab' }));
   svg.appendChild(svgEl('text', { x: 195, y: 182, 'text-anchor': 'middle', 'font-size': 10,
     fill: '#fff', 'font-family': 'sans-serif' }, 'SG90'));
-  partLabel(svg, 195, 218, '서보모터');
+  partLabel(svg, 195, 218, t('wiring.part.servo'));
 }
 
 function lcdScene(svg) {
@@ -440,14 +443,14 @@ function lcdScene(svg) {
   svg.appendChild(svgEl('rect', { x: 95, y: 172, width: 170, height: 46, rx: 3,
     fill: '#1a237e', stroke: '#0d1257' }));
   svg.appendChild(svgEl('text', { x: 180, y: 199, 'text-anchor': 'middle', 'font-size': 12,
-    fill: '#c5e1a5', 'font-family': 'monospace' }, '안녕! BLOCKDUINO'));
+    fill: '#c5e1a5', 'font-family': 'monospace' }, t('wiring.lcdScreen')));
   for (const key of ['GND', '5V', 'A4', 'A5']) {
     const tx = pinsX[key];
     svg.appendChild(svgEl('circle', { cx: tx, cy: 156, r: 3, fill: '#ffd54f' }));
     svg.appendChild(svgEl('text', { x: tx, y: 168, 'text-anchor': 'middle', 'font-size': 8,
       fill: '#fff', 'font-family': 'sans-serif' }, labels[key]));
   }
-  partLabel(svg, 180, 242, 'I2C LCD 모듈 (주소 0x27)');
+  partLabel(svg, 180, 242, t('wiring.part.lcd'));
 }
 
 // 장면별 세로 크기
@@ -465,7 +468,7 @@ function renderCard(entry, block, titleSuffix) {
   card.className = 'wiring-card';
 
   const title = document.createElement('h4');
-  title.textContent = entry.title + (titleSuffix || '');
+  title.textContent = t(entry.titleKey) + (titleSuffix || '');
   card.appendChild(title);
 
   const h = SCENE_HEIGHT[block.type] || 262;
@@ -499,7 +502,7 @@ function renderWiringPanel(workspace, panelEl) {
   const seen = new Set();
   const blocks = workspace.getAllBlocks(false).filter((b) => WIRING[b.type]);
   if (blocks.length === 0) {
-    panelEl.textContent = '부품 블록을 사용하면 여기에 연결 방법이 나와요.';
+    panelEl.textContent = t('wiring.empty');
     return;
   }
   const cards = [];
@@ -513,20 +516,20 @@ function renderWiringPanel(workspace, panelEl) {
       continue;
     }
     // 같은 부품+같은 핀 조합은 카드 1장만
-    const key = entry.title + JSON.stringify(entry.pins(block));
+    const key = entry.titleKey + JSON.stringify(entry.pins(block));
     if (seen.has(key)) continue;
     seen.add(key);
     cards.push({ entry, block });
   }
   // 같은 제목 카드가 여러 장이면 신호 핀 번호로 구분
   const titleCount = new Map();
-  for (const c of cards) titleCount.set(c.entry.title, (titleCount.get(c.entry.title) || 0) + 1);
+  for (const c of cards) titleCount.set(c.entry.titleKey, (titleCount.get(c.entry.titleKey) || 0) + 1);
   for (const c of cards) {
     let suffix = '';
-    if (titleCount.get(c.entry.title) > 1) {
+    if (titleCount.get(c.entry.titleKey) > 1) {
       const pins = c.entry.pins(c.block);
       const sig = pins.find((p) => /^[DA]\d/.test(p.boardPin)) || pins[0];
-      suffix = ` — ${sig.boardPin} 핀`;
+      suffix = t('wiring.pinSuffix', { pin: sig.boardPin });
     }
     panelEl.appendChild(renderCard(c.entry, c.block, suffix));
   }

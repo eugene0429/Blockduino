@@ -4,49 +4,53 @@ const { arduinoGenerator: g, Order } = require('../arduino-generator.js');
 const { DIGITAL_PINS, PWM_PINS, ANALOG_PINS } = require('../pins.js');
 
 const NOTES = [
-  ['도', '262'], ['레', '294'], ['미', '330'], ['파', '349'],
-  ['솔', '392'], ['라', '440'], ['시', '494'], ['높은 도', '523'],
+  ['%{BKY_BD_NOTE_C}', '262'], ['%{BKY_BD_NOTE_D}', '294'], ['%{BKY_BD_NOTE_E}', '330'],
+  ['%{BKY_BD_NOTE_F}', '349'], ['%{BKY_BD_NOTE_G}', '392'], ['%{BKY_BD_NOTE_A}', '440'],
+  ['%{BKY_BD_NOTE_B}', '494'], ['%{BKY_BD_NOTE_HIGH_C}', '523'],
 ];
-const BEATS = [['1박', '1'], ['반박', '0.5'], ['2박', '2'], ['4박', '4']];
+const BEATS = [
+  ['%{BKY_BD_BEAT_1}', '1'], ['%{BKY_BD_BEAT_HALF}', '0.5'],
+  ['%{BKY_BD_BEAT_2}', '2'], ['%{BKY_BD_BEAT_4}', '4'],
+];
 
 Blockly.defineBlocksWithJsonArray([
   { type: 'io_led',
-    message0: 'LED %1 번 핀 %2',
+    message0: '%{BKY_BD_LED}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS },
-      { type: 'field_dropdown', name: 'STATE', options: [['켜기', 'HIGH'], ['끄기', 'LOW']] },
+      { type: 'field_dropdown', name: 'STATE', options: [['%{BKY_BD_LED_ON}', 'HIGH'], ['%{BKY_BD_LED_OFF}', 'LOW']] },
     ],
     previousStatement: null, nextStatement: null, colour: 20,
-    tooltip: 'LED를 켜거나 꺼요.' },
+    tooltip: '%{BKY_BD_LED_TOOLTIP}' },
   { type: 'io_digital_write',
-    message0: '디지털 %1 번 핀에 %2 신호 보내기',
+    message0: '%{BKY_BD_DIGITAL_WRITE}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS },
-      { type: 'field_dropdown', name: 'STATE', options: [['켜짐(HIGH)', 'HIGH'], ['꺼짐(LOW)', 'LOW']] },
+      { type: 'field_dropdown', name: 'STATE', options: [['%{BKY_BD_DIGITAL_HIGH}', 'HIGH'], ['%{BKY_BD_DIGITAL_LOW}', 'LOW']] },
     ],
     previousStatement: null, nextStatement: null, colour: 20 },
   { type: 'io_digital_read',
-    message0: '디지털 %1 번 핀 신호',
+    message0: '%{BKY_BD_DIGITAL_READ}',
     args0: [{ type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS }],
     output: 'Boolean', colour: 20 },
   { type: 'io_analog_write',
-    message0: '핀 %1 에 밝기/세기 %2 만큼 출력 (0~255)',
+    message0: '%{BKY_BD_ANALOG_WRITE}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: PWM_PINS },
       { type: 'input_value', name: 'VALUE', check: 'Number' },
     ],
     previousStatement: null, nextStatement: null, colour: 20 },
   { type: 'io_analog_read',
-    message0: '아날로그 %1 핀 값 (0~1023)',
+    message0: '%{BKY_BD_ANALOG_READ}',
     args0: [{ type: 'field_dropdown', name: 'PIN', options: ANALOG_PINS }],
     output: 'Number', colour: 20 },
   { type: 'io_button',
-    message0: '%1 번 핀 버튼이 눌렸는가?',
+    message0: '%{BKY_BD_BUTTON}',
     args0: [{ type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS }],
     output: 'Boolean', colour: 20,
-    tooltip: '버튼은 핀과 GND 사이에 연결해요.' },
+    tooltip: '%{BKY_BD_BUTTON_TOOLTIP}' },
   { type: 'io_buzzer_tone',
-    message0: '부저 %1 번 핀 %2 음 %3 연주',
+    message0: '%{BKY_BD_BUZZER_TONE}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS },
       { type: 'field_dropdown', name: 'NOTE', options: NOTES },
@@ -54,33 +58,33 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: null, nextStatement: null, colour: 20 },
   { type: 'io_buzzer_off',
-    message0: '부저 %1 번 핀 멈추기',
+    message0: '%{BKY_BD_BUZZER_OFF}',
     args0: [{ type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS }],
     previousStatement: null, nextStatement: null, colour: 20 },
   { type: 'io_led_effect',
-    message0: 'LED %1 번 핀 %2',
+    message0: '%{BKY_BD_LED_EFFECT}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS },
       { type: 'field_dropdown', name: 'EFFECT', options: [
-        ['점사 (빠르게 3번 깜빡)', 'BURST'],
-        ['천천히 5번 깜빡이기', 'BLINK'],
-        ['SOS 신호 보내기', 'SOS'],
+        ['%{BKY_BD_LED_EFFECT_BURST}', 'BURST'],
+        ['%{BKY_BD_LED_EFFECT_BLINK}', 'BLINK'],
+        ['%{BKY_BD_LED_EFFECT_SOS}', 'SOS'],
       ] },
     ],
     previousStatement: null, nextStatement: null, colour: 20,
-    tooltip: 'LED로 재미있는 불빛 효과를 만들어요.' },
+    tooltip: '%{BKY_BD_LED_EFFECT_TOOLTIP}' },
   { type: 'io_buzzer_melody',
-    message0: '부저 %1 번 핀으로 %2 연주하기',
+    message0: '%{BKY_BD_BUZZER_MELODY}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS },
       { type: 'field_dropdown', name: 'SONG', options: [
-        ['비행기', 'PLANE'],
-        ['학교종', 'BELL'],
-        ['반짝반짝 작은별', 'STAR'],
+        ['%{BKY_BD_SONG_PLANE}', 'PLANE'],
+        ['%{BKY_BD_SONG_BELL}', 'BELL'],
+        ['%{BKY_BD_SONG_STAR}', 'STAR'],
       ] },
     ],
     previousStatement: null, nextStatement: null, colour: 20,
-    tooltip: '부저로 동요를 연주해요.' },
+    tooltip: '%{BKY_BD_BUZZER_MELODY_TOOLTIP}' },
 ]);
 
 g.forBlock['io_led'] = g.forBlock['io_digital_write'] = function (block, gen) {

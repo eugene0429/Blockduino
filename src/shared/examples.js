@@ -1,4 +1,5 @@
 'use strict';
+const { locale, LOCALES } = require('./i18n.js');
 
 // 미리 만들어진 예제 데모: 블록이 일부 연결된 상태의 워크스페이스 JSON.
 // 배선 카드는 배선 탭이 사용 중인 부품 블록에서 자동으로 그려준다 (wiring.js).
@@ -14,11 +15,19 @@ const BRIGHT_VAR = 'bright-var-id'; // 밝기 (센서등 2)
 const DIST_VAR = 'dist-var-id';     // 거리 (자동문 2)
 const TEMP_VAR = 'temp-var-id';     // 온도 (화재 경보기 2)
 
+// 변수 id → 로케일의 variables 키. 예제 JSON에는 기본(영어) 이름이 들어가고,
+// 로드할 때 localizeWorkspace()가 현재 언어 이름으로 바꿔 준다.
+const EXAMPLE_VARIABLES = {
+  [BRIGHT_VAR]: 'brightness',
+  [DIST_VAR]: 'distance',
+  [TEMP_VAR]: 'temperature',
+};
+const varName = (id) => LOCALES.en.variables[EXAMPLE_VARIABLES[id]];
+
+
 const EXAMPLES = [
   {
     id: 'light',
-    title: '센서등 1',
-    description: '어두워지면 LED가 켜져요',
     workspace: { blocks: { languageVersion: 0, blocks: [
       { type: 'basic_setup', x: 40, y: 40 },
       { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
@@ -36,10 +45,8 @@ const EXAMPLES = [
   },
   {
     id: 'light2',
-    title: '센서등 2',
-    description: '밝기에 따라 빨강·노랑·초록 불이 켜져요',
     workspace: {
-      variables: [{ name: '밝기', id: BRIGHT_VAR }],
+      variables: [{ name: varName(BRIGHT_VAR), id: BRIGHT_VAR }],
       blocks: { languageVersion: 0, blocks: [
         { type: 'basic_setup', x: 40, y: 40 },
         { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
@@ -73,8 +80,6 @@ const EXAMPLES = [
   },
   {
     id: 'door',
-    title: '자동문 1',
-    description: '가까이 가면 서보모터가 문을 열어요',
     workspace: { blocks: { languageVersion: 0, blocks: [
       { type: 'basic_setup', x: 40, y: 40 },
       { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
@@ -100,10 +105,8 @@ const EXAMPLES = [
   },
   {
     id: 'door2',
-    title: '자동문 2',
-    description: '가까울수록 문이 크게 열려요',
     workspace: {
-      variables: [{ name: '거리', id: DIST_VAR }],
+      variables: [{ name: varName(DIST_VAR), id: DIST_VAR }],
       blocks: { languageVersion: 0, blocks: [
         { type: 'basic_setup', x: 40, y: 40 },
         { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
@@ -140,8 +143,6 @@ const EXAMPLES = [
   },
   {
     id: 'fire',
-    title: '화재 경보기 1',
-    description: '온도가 높아지면 부저가 울려요',
     workspace: { blocks: { languageVersion: 0, blocks: [
       { type: 'basic_setup', x: 40, y: 40 },
       { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
@@ -159,10 +160,8 @@ const EXAMPLES = [
   },
   {
     id: 'fire2',
-    title: '화재 경보기 2',
-    description: '온도 단계에 따라 경보음이 달라져요',
     workspace: {
-      variables: [{ name: '온도', id: TEMP_VAR }],
+      variables: [{ name: varName(TEMP_VAR), id: TEMP_VAR }],
       blocks: { languageVersion: 0, blocks: [
         { type: 'basic_setup', x: 40, y: 40 },
         { type: 'basic_loop', x: 40, y: 180, inputs: { BODY: { block: {
@@ -270,4 +269,22 @@ function makePractice(answer) {
 
 for (const ex of EXAMPLES) ex.practice = makePractice(ex.workspace);
 
-module.exports = { EXAMPLES };
+// 제목/설명은 현재 언어를 따라가도록 getter로 둔다 (locales/*.js의 examples 항목)
+for (const ex of EXAMPLES) {
+  Object.defineProperties(ex, {
+    title: { get: () => locale().examples[ex.id].title, enumerable: true },
+    description: { get: () => locale().examples[ex.id].description, enumerable: true },
+  });
+}
+
+// 예제 워크스페이스 JSON을 복제하고 변수 이름을 해당 언어로 바꾼다
+function localizeWorkspace(ws, lang) {
+  const out = clone(ws);
+  for (const v of out.variables || []) {
+    const key = EXAMPLE_VARIABLES[v.id];
+    if (key) v.name = locale(lang).variables[key];
+  }
+  return out;
+}
+
+module.exports = { EXAMPLES, EXAMPLE_VARIABLES, localizeWorkspace };

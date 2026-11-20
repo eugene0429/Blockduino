@@ -10,7 +10,7 @@ const ARCHIVES = {
   darwin: `arduino-cli_${VERSION}_macOS_ARM64.tar.gz`,
 };
 const archive = ARCHIVES[PLATFORM];
-if (!archive) throw new Error(`지원하지 않는 플랫폼: ${PLATFORM}`);
+if (!archive) throw new Error(`Unsupported platform: ${PLATFORM}`);
 
 const destDir = path.resolve('vendor/arduino', PLATFORM);
 const bin = path.join(destDir, PLATFORM === 'win32' ? 'arduino-cli.exe' : 'arduino-cli');
@@ -18,13 +18,13 @@ mkdirSync(destDir, { recursive: true });
 
 if (!existsSync(bin)) {
   const url = `https://downloads.arduino.cc/arduino-cli/${archive}`;
-  console.log('다운로드:', url);
+  console.log('Downloading:', url);
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`다운로드 실패: HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`Download failed: HTTP ${res.status}`);
   const archivePath = path.join(destDir, archive);
   await pipeline(res.body, createWriteStream(archivePath));
   if (archive.endsWith('.zip')) {
-    execFileSync('tar', ['-xf', archivePath, '-C', destDir]); // Win10+ 기본 tar가 zip 해제 지원
+    execFileSync('tar', ['-xf', archivePath, '-C', destDir]); // Windows 10+ built-in tar can extract zip
   } else {
     execFileSync('tar', ['-xzf', archivePath, '-C', destDir]);
   }
@@ -41,6 +41,6 @@ const cli = (args) => execFileSync(bin, args, { env, stdio: 'inherit' });
 cli(['core', 'update-index']);
 cli(['core', 'install', 'arduino:avr']);
 cli(['lib', 'install', 'Servo']);
-cli(['lib', 'install', 'DHT sensor library']); // Adafruit, 의존성 자동 설치
+cli(['lib', 'install', 'DHT sensor library']); // Adafruit; dependencies are installed automatically
 cli(['lib', 'install', 'LiquidCrystal I2C']);
-console.log('완료:', destDir);
+console.log('Done:', destDir);

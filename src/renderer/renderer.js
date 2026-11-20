@@ -1,15 +1,53 @@
 'use strict';
 const Blockly = require('blockly');
-const ko = require('blockly/msg/ko');
+const { ipcRenderer } = require('electron');
+const path = require('path');
+const i18n = require('../shared/i18n.js');
 require('../shared/blocks/index.js');
+const { applyBlockMessages } = require('../shared/blocks/messages.js');
 const { arduinoGenerator } = require('../shared/arduino-generator.js');
-const toolbox = require('./toolbox.js');
+const { buildToolbox } = require('./toolbox.js');
 const { renderWiringPanel } = require('./wiring.js');
+const { EXAMPLES, EXAMPLE_VARIABLES, localizeWorkspace } = require('../shared/examples.js');
 
-Blockly.setLocale(ko);
+const { t } = i18n;
+
+// ── 언어 (기본: 영어) ────────────────────────────────
+// 선택한 언어는 이 PC의 localStorage에 기억한다. 저장소를 못 쓰면 기본값으로 동작.
+const LANG_STORAGE_KEY = 'blockduino.lang';
+const BLOCKLY_LOCALES = {
+  en: require('blockly/msg/en'),
+  ko: require('blockly/msg/ko'),
+};
+
+function loadSavedLang() {
+  try { return localStorage.getItem(LANG_STORAGE_KEY); } catch { return null; }
+}
+function saveLang(lang) {
+  try { localStorage.setItem(LANG_STORAGE_KEY, lang); } catch { /* 무시 */ }
+}
+function applyBlocklyLocale() {
+  Blockly.setLocale(BLOCKLY_LOCALES[i18n.getLang()]); // 표준 블록(만약/반복 등) 문구
+  applyBlockMessages(i18n.getLang());                 // 우리 블록 문구 (%{BKY_BD_*})
+}
+// HTML의 data-i18n / data-i18n-title / data-i18n-placeholder 요소에 문구를 채운다
+function applyStaticTexts() {
+  document.documentElement.lang = i18n.getLang();
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-title]')) el.title = t(el.dataset.i18nTitle);
+  for (const el of document.querySelectorAll('[data-i18n-placeholder]')) {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  }
+}
+
+i18n.setLang(loadSavedLang() || i18n.DEFAULT_LANG);
+ipcRenderer.invoke('lang:set', i18n.getLang()); // 메인 프로세스(대화상자·포트 이름·오류 문구)
+applyBlocklyLocale();
+applyStaticTexts();
+document.getElementById('project-name').value = t('project.defaultName');
 
 const workspace = Blockly.inject('blocklyDiv', {
-  toolbox,
+  toolbox: buildToolbox(),
   grid: { spacing: 24, length: 2, colour: '#eee', snap: true },
   zoom: { controls: true, wheel: true, startScale: 0.9 },
   trashcan: true,
@@ -88,9 +126,6 @@ renderWiring();
 
 window.blockduino = { refreshCode, selectTab };
 
-const { ipcRenderer } = require('electron');
-const path = require('path');
-
 async function saveProject() {
   const json = Blockly.serialization.workspaces.save(workspace);
   const saved = await ipcRenderer.invoke('project:save', {
@@ -98,14 +133,14 @@ async function saveProject() {
   });
   if (saved && saved.error) {
     showError(saved.error.message, saved.error.detail, false);
-    setStatus('저장에 실패했어요');
+    setStatus(t('status.saveFailed'));
     return;
   }
   if (saved) {
     window.appState.currentFilePath = saved;
     window.appState.dirty = false;
     document.getElementById('project-name').value = path.basename(saved, '.bdn');
-    setStatus('저장 완료 ✓');
+    setStatus(t('status.saved'));
   }
 }
 
@@ -116,7 +151,7 @@ async function openProject() {
   if (!result) return;
   if (result.error) {
     showError(result.error.message, result.error.detail, false);
-    setStatus('프로젝트를 여는 데 실패했어요');
+    setStatus(t('status.openFailed'));
     return;
   }
   Blockly.Events.disable();
@@ -133,7 +168,7 @@ async function openProject() {
   renderWiring();
   document.getElementById('project-name').value = path.basename(result.filePath, '.bdn');
   refreshCode();
-  setStatus('프로젝트를 열었어요');
+  setStatus(t('status.opened'));
 }
 
 function setStatus(msg) {
@@ -146,18 +181,18 @@ window.blockduino.setStatus = setStatus;
 
 // ── 포트 감지 & 업로드 ──────────────────────────────
 const portSelect = document.getElementById('port-select');
-let knownPorts = [];
+let knownPorts = null; // null이면 다음 refreshPorts에서 목록을 무조건 다시 그린다
 
 async function refreshPorts() {
   const ports = await ipcRenderer.invoke('ports:list');
-  if (JSON.stringify(ports) === JSON.stringify(knownPorts)) return;
+  if (knownPorts && JSON.stringify(ports) === JSON.stringify(knownPorts)) return;
   knownPorts = ports;
   const prev = portSelect.value;
   portSelect.innerHTML = '';
   // 아두이노(호환) 보드가 없으면 안내 문구를 기본 선택으로 유지 —
   // 기타 포트에 실수로 업로드하지 않도록
   const hasBoard = ports.some((p) => p.rank <= 1);
-  if (!hasBoard) portSelect.add(new Option('보드를 연결하세요', ''));
+  if (!hasBoard) portSelect.add(new Option(t('ports.placeholder'), ''));
   for (const p of ports) portSelect.add(new Option(p.label, p.port));
   if (ports.some((p) => p.port === prev)) portSelect.value = prev;
   else if (hasBoard) portSelect.value = ports[0].port; // rank 정렬됨: 아두이노 우선
@@ -171,18 +206,23 @@ const serialToggle = document.getElementById('serial-toggle');
 const serialPanel = document.getElementById('serial-panel');
 const serialLog = document.getElementById('serial-log');
 const SERIAL_MAX_LINES = 500;
+let serialPlaceholderKey = null; // 언어를 바꾸면 안내 문구도 다시 그리기 위해 기억
 
-function serialPlaceholder(text) {
+function serialPlaceholder(key) {
+  serialPlaceholderKey = key;
   serialLog.textContent = '';
   const span = document.createElement('span');
   span.className = 'placeholder';
-  span.textContent = text;
+  span.textContent = t(key);
   serialLog.appendChild(span);
 }
 
 function appendSerial(line) {
   const ph = serialLog.querySelector('.placeholder');
-  if (ph) serialLog.textContent = ''; // 안내 문구는 첫 데이터에서 지운다
+  if (ph) { // 안내 문구는 첫 데이터에서 지운다
+    serialLog.textContent = '';
+    serialPlaceholderKey = null;
+  }
   serialLog.appendChild(document.createTextNode(line + '\n'));
   while (serialLog.childNodes.length > SERIAL_MAX_LINES) {
     serialLog.removeChild(serialLog.firstChild); // 오래된 줄 버려 메모리 제한
@@ -193,9 +233,9 @@ function appendSerial(line) {
 function startSerialIfBoard() {
   if (portSelect.value) {
     ipcRenderer.invoke('serial:start', portSelect.value);
-    serialPlaceholder('센서값을 기다리는 중… [⬆ 업로드]를 누르면 값이 표시돼요.');
+    serialPlaceholder('serial.waiting');
   } else {
-    serialPlaceholder('보드를 먼저 연결해 주세요.');
+    serialPlaceholder('serial.noBoard');
   }
 }
 
@@ -209,6 +249,7 @@ serialToggle.addEventListener('change', () => {
 
 document.getElementById('serial-clear').addEventListener('click', () => {
   serialLog.textContent = '';
+  serialPlaceholderKey = null;
 });
 document.getElementById('serial-close').addEventListener('click', () => {
   serialToggle.checked = false;
@@ -228,7 +269,7 @@ function setStatusClass(cls) {
 
 function showError(message, detail, showCh340Hint) {
   document.getElementById('error-message').textContent = message;
-  document.getElementById('error-detail').textContent = detail || '(추가 정보 없음)';
+  document.getElementById('error-detail').textContent = detail || t('error.noDetail');
   document.getElementById('ch340-hint').hidden = !showCh340Hint;
   document.getElementById('error-dialog').showModal();
 }
@@ -236,7 +277,7 @@ document.getElementById('error-close').addEventListener('click', () =>
   document.getElementById('error-dialog').close());
 
 ipcRenderer.on('upload:stage', (_e, stage) => {
-  setStatus(stage === 'compile' ? '컴파일 중...' : '보드에 업로드 중...');
+  setStatus(t(stage === 'compile' ? 'status.compiling' : 'status.uploading'));
 });
 
 const btnUpload = document.getElementById('btn-upload');
@@ -244,29 +285,32 @@ btnUpload.addEventListener('click', async () => {
   const code = arduinoGenerator.workspaceToCode(workspace);
   btnUpload.disabled = true;
   setStatusClass('busy');
-  setStatus('컴파일 중...');
+  setStatus(t('status.compiling'));
   const r = await ipcRenderer.invoke('sketch:upload', {
     code, port: portSelect.value,
   });
   btnUpload.disabled = false;
   if (r.ok) {
     setStatusClass('ok');
-    setStatus('업로드 완료! ✓');
+    setStatus(t('status.uploadOk'));
   } else {
     setStatusClass('error');
-    setStatus('업로드 실패');
+    setStatus(t('status.uploadFailed'));
     // 윈도우에서 포트가 하나도 안 잡히면 CH340 드라이버 안내 표시
-    const noPorts = knownPorts.length === 0 && process.platform === 'win32';
+    const noPorts = (!knownPorts || knownPorts.length === 0) && process.platform === 'win32';
     showError(r.message, r.detail, noPorts);
   }
 });
 
 // ── 예제 데모 ──────────────────────────────────────
-const { EXAMPLES } = require('../shared/examples.js');
 const exampleSelect = document.getElementById('example-select');
-for (const ex of EXAMPLES) {
-  exampleSelect.add(new Option(`${ex.title} — ${ex.description}`, ex.id));
+function renderExampleOptions() {
+  exampleSelect.length = 1; // 첫 항목("예제 열기…")만 남긴다
+  for (const ex of EXAMPLES) {
+    exampleSelect.add(new Option(`${ex.title} — ${ex.description}`, ex.id));
+  }
 }
+renderExampleOptions();
 const btnAnswer = document.getElementById('btn-answer');
 
 function loadWorkspaceJson(json) {
@@ -289,13 +333,13 @@ exampleSelect.addEventListener('change', async () => {
   // 기본은 연습 배치: 모든 블록이 분리되어 있고 값도 전부 정답과 다르다.
   // 배선 고정을 먼저 켜서 배선 탭은 정답 기준으로 그려지게 한다.
   setWiringLockExample(ex);
-  loadWorkspaceJson(ex.practice);
+  loadWorkspaceJson(localizeWorkspace(ex.practice, i18n.getLang()));
   window.appState.currentFilePath = null;
   window.appState.currentExample = ex;
   btnAnswer.disabled = false;
   document.getElementById('project-name').value = ex.title;
   selectTab(false); // 배선 탭으로 전환해 연결 그림을 바로 보여줌
-  setStatus(`예제 '${ex.title}'을(를) 열었어요. 떨어진 블록을 연결하고 값을 고쳐 완성해 보세요`);
+  setStatus(t('status.exampleOpened', { title: ex.title }));
 });
 
 // ── 정답 보기 (관리자 비밀번호 필요) ────────────────────
@@ -322,8 +366,8 @@ function tryShowAnswer() {
   }
   answerDialog.close();
   const ex = window.appState.currentExample;
-  loadWorkspaceJson(ex.workspace);
-  setStatus(`'${ex.title}' 정답 블록으로 바꿨어요`);
+  loadWorkspaceJson(localizeWorkspace(ex.workspace, i18n.getLang()));
+  setStatus(t('status.answerShown', { title: ex.title }));
 }
 
 document.getElementById('answer-ok').addEventListener('click', tryShowAnswer);
@@ -331,3 +375,63 @@ document.getElementById('answer-cancel').addEventListener('click', () => answerD
 answerInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') tryShowAnswer();
 });
+
+// ── 언어 전환 ──────────────────────────────────────
+const langSelect = document.getElementById('lang-select');
+for (const { code, name } of i18n.LANGUAGES) langSelect.add(new Option(`🌐 ${name}`, code));
+langSelect.value = i18n.getLang();
+
+// 블록 문구는 블록이 만들어질 때 정해지므로, 워크스페이스를 저장했다가 다시 불러와
+// 새 언어로 다시 그린다. 예제 변수 이름도 사용자가 바꾸지 않았다면 함께 번역한다.
+function rebuildWorkspace(prevLang) {
+  const { scrollX, scrollY, scale } = workspace;
+  Blockly.Events.disable();
+  try {
+    for (const [id, key] of Object.entries(EXAMPLE_VARIABLES)) {
+      const v = workspace.getVariableById(id);
+      if (v && v.name === i18n.locale(prevLang).variables[key]) {
+        workspace.renameVariableById(id, i18n.locale().variables[key]);
+      }
+    }
+    const state = Blockly.serialization.workspaces.save(workspace);
+    Blockly.serialization.workspaces.load(state, workspace);
+  } finally {
+    Blockly.Events.enable();
+  }
+  workspace.clearUndo();
+  workspace.setScale(scale);
+  workspace.scroll(scrollX, scrollY);
+  workspace.updateToolbox(buildToolbox());
+}
+
+function changeLanguage(lang) {
+  const prevLang = i18n.getLang();
+  if (lang === prevLang) return;
+  // 이름 칸이 기본 이름/예제 제목 그대로면 새 언어로 바꿔 준다 (사용자가 고친 이름은 유지)
+  const nameInput = document.getElementById('project-name');
+  const ex = window.appState.currentExample;
+  const nameWasDefault = nameInput.value === t('project.defaultName');
+  const nameWasExample = !!ex && nameInput.value === ex.title;
+
+  i18n.setLang(lang);
+  saveLang(lang);
+  ipcRenderer.invoke('lang:set', lang);
+  applyBlocklyLocale();
+  applyStaticTexts();
+  setStatusClass('');
+
+  if (nameWasDefault) nameInput.value = t('project.defaultName');
+  else if (nameWasExample) nameInput.value = ex.title;
+
+  renderExampleOptions();
+  if (serialPlaceholderKey) serialPlaceholder(serialPlaceholderKey);
+  knownPorts = null; // 포트 이름도 새 언어로
+  refreshPorts();
+
+  const wasDirty = window.appState.dirty;
+  rebuildWorkspace(prevLang);
+  refreshCode(); // 센서값 출력 라벨 등 코드도 새 언어로
+  window.appState.dirty = wasDirty;
+}
+
+langSelect.addEventListener('change', () => changeLanguage(langSelect.value));

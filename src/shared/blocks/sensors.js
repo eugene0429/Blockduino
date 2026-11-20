@@ -2,30 +2,31 @@
 const Blockly = require('blockly/core');
 const { arduinoGenerator: g, Order } = require('../arduino-generator.js');
 const { DIGITAL_PINS, ANALOG_PINS } = require('../pins.js');
+const { t } = require('../i18n.js');
 
 Blockly.defineBlocksWithJsonArray([
   { type: 'sensor_ultrasonic',
-    message0: '초음파 거리(cm) 트리거 %1 에코 %2',
+    message0: '%{BKY_BD_ULTRASONIC}',
     args0: [
       { type: 'field_dropdown', name: 'TRIG', options: DIGITAL_PINS },
       { type: 'field_dropdown', name: 'ECHO', options: DIGITAL_PINS },
     ],
     output: 'Number', colour: 190,
-    tooltip: 'HC-SR04 초음파 센서로 잰 거리(센티미터)예요.' },
+    tooltip: '%{BKY_BD_ULTRASONIC_TOOLTIP}' },
   { type: 'sensor_dht',
-    message0: '온습도 센서 %1 번 핀의 %2',
+    message0: '%{BKY_BD_DHT}',
     args0: [
       { type: 'field_dropdown', name: 'PIN', options: DIGITAL_PINS },
       { type: 'field_dropdown', name: 'MODE',
-        options: [['온도(℃)', 'TEMP'], ['습도(%)', 'HUM']] },
+        options: [['%{BKY_BD_DHT_TEMP}', 'TEMP'], ['%{BKY_BD_DHT_HUM}', 'HUM']] },
     ],
     output: 'Number', colour: 190,
-    tooltip: 'DHT11 센서의 온도 또는 습도 값이에요.' },
+    tooltip: '%{BKY_BD_DHT_TOOLTIP}' },
   { type: 'sensor_cds',
-    message0: '조도 센서 %1 핀 밝기 (0~1023)',
+    message0: '%{BKY_BD_CDS}',
     args0: [{ type: 'field_dropdown', name: 'PIN', options: ANALOG_PINS }],
     output: 'Number', colour: 190,
-    tooltip: 'CDS 조도 센서 값이에요. 밝을수록 값이 커져요.' },
+    tooltip: '%{BKY_BD_CDS_TOOLTIP}' },
 ]);
 
 const US_MEASURE =
@@ -81,7 +82,7 @@ g.forBlock['sensor_cds'] = function (block) {
 // 시리얼 디버그에서 각 센서를 어떤 이름으로 출력할지. 생성기가 이 목록의
 // 키로 센서 블록을 스캔한다 (arduino-generator.js init 참고).
 g.debugLabels = {
-  sensor_cds: (b) => `조도(${b.getFieldValue('PIN')})`,
-  sensor_ultrasonic: () => '거리(cm)',
-  sensor_dht: (b) => (b.getFieldValue('MODE') === 'TEMP' ? '온도(℃)' : '습도(%)'),
+  sensor_cds: (b) => t('debug.cds', { pin: b.getFieldValue('PIN') }),
+  sensor_ultrasonic: () => t('debug.distance'),
+  sensor_dht: (b) => t(b.getFieldValue('MODE') === 'TEMP' ? 'debug.temp' : 'debug.humidity'),
 };

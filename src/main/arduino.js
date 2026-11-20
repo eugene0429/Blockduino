@@ -3,6 +3,7 @@ const { execFile, spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs/promises');
+const { t } = require('../shared/i18n.js');
 
 const FQBN = 'arduino:avr:uno';
 
@@ -53,15 +54,15 @@ function parseBoardList(stdout) {
       const addr = p.port.address;
       const board = (p.matching_boards || [])[0];
       if (board) {
-        return { port: addr, label: `아두이노 보드 (${addr})`,
+        return { port: addr, label: t('port.arduino', { port: addr }),
           isUno: board.fqbn === FQBN, rank: 0 };
       }
       const vid = String((p.port.properties || {}).vid || '')
         .replace(/^0x/i, '').toUpperCase();
       if (LIKELY_VIDS.has(vid)) {
-        return { port: addr, label: `아두이노 호환 보드 (${addr})`, isUno: false, rank: 1 };
+        return { port: addr, label: t('port.compatible', { port: addr }), isUno: false, rank: 1 };
       }
-      return { port: addr, label: `기타 포트 (${addr})`, isUno: false, rank: 2 };
+      return { port: addr, label: t('port.other', { port: addr }), isUno: false, rank: 2 };
     })
     .sort((a, b) => a.rank - b.rank);
 }

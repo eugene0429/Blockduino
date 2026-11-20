@@ -1,15 +1,15 @@
 name: Build Windows Installer
 
-# 로컬(macOS)에서는 Windows용 아두이노 툴체인을 만들 수 없으므로,
-# Windows 러너에서 vendor/arduino/win32 를 직접 provisioning 한 뒤 NSIS 설치본을 빌드한다.
-# 산출물은 Actions 아티팩트로 내려받아 실제 Windows 환경에서 테스트한다.
+# The Windows Arduino toolchain can't be prepared on macOS, so this workflow
+# provisions vendor/arduino/win32 on a Windows runner and builds the NSIS installer.
+# Download the installer from the run's artifacts and test it on a real Windows PC.
 
 on:
   push:
     branches: [main, feature/blockduino-v1]
   pull_request:
     branches: [main]
-  workflow_dispatch: # Actions 탭에서 수동 실행 가능
+  workflow_dispatch: # can also be started manually from the Actions tab
 
 concurrency:
   group: build-windows-${{ github.ref }}
@@ -44,9 +44,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # arduino-cli.exe + AVR 코어/툴체인(avr-gcc.exe, avrdude.exe) + 라이브러리를
-      # Windows 네이티브 바이너리로 내려받아 vendor/arduino/win32 를 채운다.
-      # electron-builder 의 extraResources 가 이 폴더를 번들한다.
+      # Downloads arduino-cli.exe, the AVR core/toolchain (avr-gcc.exe, avrdude.exe)
+      # and libraries as native Windows binaries into vendor/arduino/win32.
+      # electron-builder bundles that folder via extraResources.
       - name: Provision Windows Arduino toolchain
         run: npm run prepare-arduino
 
@@ -54,13 +54,13 @@ jobs:
         shell: pwsh
         run: |
           if (-not (Test-Path "vendor/arduino/win32/arduino-cli.exe")) {
-            Write-Error "arduino-cli.exe 가 없습니다 — prepare-arduino 실패"
+            Write-Error "arduino-cli.exe is missing — prepare-arduino failed"
             exit 1
           }
           Get-ChildItem vendor/arduino/win32 | Select-Object Name, Length
 
-      # --publish never: electron-builder 가 릴리스 업로드를 시도하지 않도록 막는다.
-      # 코드 서명 인증서가 없으므로 서명되지 않은 설치본이 생성된다(테스트용으로 충분).
+      # --publish never: stop electron-builder from trying to upload a release.
+      # There is no code-signing certificate, so the installer is unsigned (fine for testing).
       - name: Build NSIS installer
         run: npm run dist -- --publish never
         env:

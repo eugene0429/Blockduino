@@ -3,16 +3,21 @@ const { ipcMain, dialog } = require('electron');
 const fs = require('fs/promises');
 const arduino = require('./arduino.js');
 const { friendlyError } = require('./messages.js');
+const { t, setLang } = require('../shared/i18n.js');
 
-const BDN_FILTER = [{ name: 'Blockduino 프로젝트', extensions: ['bdn'] }];
+const bdnFilter = () => [{ name: t('file.filterName'), extensions: ['bdn'] }];
 
 function registerIpc(getWindow) {
+  // The renderer owns the language choice; main mirrors it for dialogs,
+  // port labels and upload error messages.
+  ipcMain.handle('lang:set', (_e, lang) => setLang(lang));
+
   ipcMain.handle('project:save', async (_e, { json, filePath }) => {
     try {
       let target = filePath;
       if (!target) {
         const r = await dialog.showSaveDialog(getWindow(), {
-          title: '프로젝트 저장', defaultPath: '새 프로젝트.bdn', filters: BDN_FILTER,
+          title: t('file.saveTitle'), defaultPath: t('file.defaultFileName'), filters: bdnFilter(),
         });
         if (r.canceled) return null;
         target = r.filePath;
@@ -22,7 +27,7 @@ function registerIpc(getWindow) {
     } catch (err) {
       return {
         error: {
-          message: '프로젝트를 저장하지 못했어요. 다른 위치에 저장해 보세요',
+          message: t('file.saveError'),
           detail: String(err),
         },
       };
@@ -32,7 +37,7 @@ function registerIpc(getWindow) {
   ipcMain.handle('project:open', async () => {
     try {
       const r = await dialog.showOpenDialog(getWindow(), {
-        title: '프로젝트 열기', filters: BDN_FILTER, properties: ['openFile'],
+        title: t('file.openTitle'), filters: bdnFilter(), properties: ['openFile'],
       });
       if (r.canceled || !r.filePaths[0]) return null;
       const text = await fs.readFile(r.filePaths[0], 'utf8');
@@ -40,7 +45,7 @@ function registerIpc(getWindow) {
     } catch (err) {
       return {
         error: {
-          message: '프로젝트 파일을 열 수 없어요. 파일이 손상되었을 수 있어요',
+          message: t('file.openError'),
           detail: String(err),
         },
       };
@@ -49,8 +54,8 @@ function registerIpc(getWindow) {
 
   ipcMain.handle('confirm-discard', async () => {
     const r = await dialog.showMessageBox(getWindow(), {
-      type: 'question', buttons: ['계속하기', '취소'], defaultId: 1, cancelId: 1,
-      message: '저장하지 않은 변경이 있어요. 저장하지 않고 계속할까요?',
+      type: 'question', buttons: [t('file.discardContinue'), t('dialog.cancel')], defaultId: 1, cancelId: 1,
+      message: t('file.discardMessage'),
     });
     return r.response === 0;
   });
